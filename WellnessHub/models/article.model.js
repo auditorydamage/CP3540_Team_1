@@ -1,0 +1,33 @@
+const mongoose = require('mongoose');
+
+const ActivitySubSchema = mongoose.Schema({
+    activityType: String,
+    body: String
+});
+
+const MealSubSchema = mongoose.Schema({
+    name: String,
+    cuisine: String,
+    mealType: String,
+    body: String,
+    ingredients: [String]
+});
+
+
+// Initial form of the Article schema. Will likely turn category into an enum.
+const ArticleSchema = mongoose.Schema({
+    author: String,
+    title: String,
+    category: {
+        type: String,
+        enum: ["activity", "meal"]
+    },
+    $cond: {
+        if: { $eq: ["category", "activity"] },
+        then: { activity: ActivitySubSchema },
+        else: { meal: MealSubSchema }
+    }
+}, { timestamps: true });
+
+const Article = mongoose.model("wh_article", ArticleSchema);
+module.exports = Article;

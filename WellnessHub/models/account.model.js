@@ -1,5 +1,37 @@
 const mongoose = require('mongoose');
 
+const WeightLogSchema = mongoose.Schema({
+    date: Date,
+    weight: Number,
+    unit: String
+});
+
+const MoodLogSchema = mongoose.Schema({
+    date: Date,
+    mood: String
+});
+
+const WaterLogSchema = mongoose.Schema({
+    date: Date,
+    amount: Number,
+    unit: String
+});
+
+const HeartRateLogSchema = mongoose.Schema({
+    date: Date,
+    heartRate: Number
+});
+
+const ActivityLogSchema = mongoose.Schema({
+    date: Date,
+    activity: String
+});
+
+const MealPlanSchema = mongoose.Schema({
+    date: Date,
+    meal: String
+})
+
 const UserDataSchema = mongoose.Schema({
     userPic: {
         type: String,
@@ -14,6 +46,9 @@ const UserDataSchema = mongoose.Schema({
         type: String,
         enum: ["sedentary", "lightly active", "moderately active", "very active", "extra active"],
         required: true
+    },
+    calorieGoal: {
+        type: Number
     },
     weightLog: {
         type: [WeightLogSchema],
