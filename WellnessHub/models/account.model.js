@@ -27,6 +27,11 @@ const ActivityLogSchema = mongoose.Schema({
     activity: String
 });
 
+const SleepLogSchema = mongoose.Schema({
+    date: Date,
+    hours: Number,
+})
+
 const MealPlanSchema = mongoose.Schema({
     date: Date,
     meal: String
@@ -50,6 +55,9 @@ const UserDataSchema = mongoose.Schema({
     calorieGoal: {
         type: Number
     },
+    wellnessGoal: {
+        type: [String]
+    },
     weightLog: {
         type: [WeightLogSchema],
         required: false
@@ -68,6 +76,10 @@ const UserDataSchema = mongoose.Schema({
     },
     activityLog: {
         type: [ActivityLogSchema],
+        required: false
+    },
+    sleepLog: {
+        type: [SleepLogSchema],
         required: false
     },
     mealPlans: {

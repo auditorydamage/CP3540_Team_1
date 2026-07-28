@@ -19,7 +19,7 @@ app.post('/', (req, res) => {
   res.send('POST works!');
 });
 
-mongoose.connect('mongodb+srv://markphoenix06_db_user:Password1@home.2funf.mongodb.net/?appName=home', { dbName: 'home' })
+mongoose.connect('mongodb+srv://markphoenix06_db_user:Password1@home.2funf.mongodb.net/?appName=home', { dbName: 'wellnesshub' })
     .then(() => {
         console.log("Connected to the database.");
         app.listen(port, () => {

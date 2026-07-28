@@ -13,8 +13,6 @@ const MealSubSchema = mongoose.Schema({
     ingredients: [String]
 });
 
-
-// Initial form of the Article schema. Will likely turn category into an enum.
 const ArticleSchema = mongoose.Schema({
     author: String,
     title: String,
