@@ -1,3 +1,6 @@
+require("dotenv").config();
+const dns = require("dns");
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -11,7 +14,8 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 // app.use('/api/wellnesshub', wellnessRoute);
-
+const accountRoutes = require("./routes/account.routes");
+app.use("/api/accounts", accountRoutes);
 // test GET
 app.get('/', (req, res) => {
   res.send('GET works!');
@@ -29,6 +33,7 @@ mongoose.connect('mongodb+srv://markphoenix06_db_user:Password1@home.2funf.mongo
             console.log(`WellnessHub listening on port ${port}`);
         });
     })
-    .catch(() => {
-        console.log("Failed to connect to the database.");
-    });
+    .catch((error) => {
+    console.log("Failed to connect to the database.");
+    console.error(error.message);
+});
