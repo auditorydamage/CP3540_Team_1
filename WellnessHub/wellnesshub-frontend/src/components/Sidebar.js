@@ -54,7 +54,9 @@ function Sidebar() {
 
       <hr />
 
-      <p>Logout</p>
+      <NavLink to="/login" style={linkStyle}>
+  🚪 Logout
+</NavLink>
     </aside>
   );
 }

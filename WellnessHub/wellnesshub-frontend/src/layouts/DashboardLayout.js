@@ -1,7 +1,8 @@
+import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 
-function DashboardLayout({ children }) {
+function DashboardLayout() {
   return (
     <div
       style={{
@@ -18,7 +19,8 @@ function DashboardLayout({ children }) {
         }}
       >
         <Navbar />
-        {children}
+
+        <Outlet />
       </div>
     </div>
   );
