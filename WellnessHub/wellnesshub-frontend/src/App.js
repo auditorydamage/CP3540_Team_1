@@ -1,24 +1,38 @@
-import logo from './logo.svg';
-import './App.css';
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes
+} from "react-router-dom";
+
+import DashboardLayout from "./layouts/DashboardLayout";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import WaterTracker from "./pages/WaterTracker";
+import MoodCheckIn from "./pages/MoodCheckIn";
+import Exercise from "./pages/Exercise";
+import Recipes from "./pages/Recipes";
+import Profile from "./pages/Profile";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/water" element={<WaterTracker />} />
+          <Route path="/mood" element={<MoodCheckIn />} />
+          <Route path="/exercise" element={<Exercise />} />
+          <Route path="/recipes" element={<Recipes />} />
+          <Route path="/profile" element={<Profile />} />
+        </Route>
+
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
