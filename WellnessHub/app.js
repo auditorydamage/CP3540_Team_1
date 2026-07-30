@@ -1,18 +1,19 @@
-require("dotenv").config();
-const dns = require("dns");
-dns.setServers(["8.8.8.8", "1.1.1.1"]);
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const JWT_SECRET = process.env.JWT_SECRET;
+const dns = require("dns");
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
 const app = express();
 const port = 3000;
 
 app.use(cors());
 app.use(express.json());
 const accountRoutes = require("./routes/account.routes");
+const articleRoutes = require("./routes/article.routes");
+app.use("/api/articles", articleRoutes);
 app.use("/api/accounts", accountRoutes);
 // test GET
 app.get('/', (req, res) => {

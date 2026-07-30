@@ -20,11 +20,9 @@ const ArticleSchema = mongoose.Schema({
         type: String,
         enum: ["activity", "meal"]
     },
-    $cond: {
-        if: { $eq: ["category", "activity"] },
-        then: { activity: ActivitySubSchema },
-        else: { meal: MealSubSchema }
-    }
+    activity: ActivitySubSchema,
+    meal: MealSubSchema,
+    isPublished: Boolean
 }, { timestamps: true });
 
 const Article = mongoose.model("wh_article", ArticleSchema);
