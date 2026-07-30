@@ -6,6 +6,7 @@ const loginAccount = async (req, res) => {
     try {
         const { username, password } = req.body;
 
+        // Validate the required login information.
         if (!username || !password) {
             return res.status(400).json({
                 message: "Username and password are required."
@@ -20,6 +21,7 @@ const loginAccount = async (req, res) => {
             });
         }
 
+        // Compare the submitted password with the stored password hash.
         const passwordMatches = await bcrypt.compare(
             password,
             account.password
@@ -31,6 +33,7 @@ const loginAccount = async (req, res) => {
             });
         }
 
+        // Create a JWT for accessing protected routes.
         const token = jwt.sign(
             {
                 accountId: account._id,
@@ -59,6 +62,32 @@ const loginAccount = async (req, res) => {
     }
 };
 
+const getCurrentAccount = async (req, res) => {
+    try {
+        // Retrieve the authenticated account without returning its password.
+        const account = await Account.findById(
+            req.account.accountId
+        ).select("-password");
+
+        if (!account) {
+            return res.status(404).json({
+                message: "Account not found."
+            });
+        }
+
+        return res.status(200).json({
+            message: "Account retrieved successfully.",
+            account
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Unable to retrieve account.",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
-    loginAccount
+    loginAccount,
+    getCurrentAccount
 };
