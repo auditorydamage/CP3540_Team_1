@@ -7,13 +7,11 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const JWT_SECRET = process.env.JWT_SECRET;
-// const wellnessRoute = require('./routes/wellnesshub.route');
 const app = express();
 const port = 3000;
 
 app.use(cors());
 app.use(express.json());
-// app.use('/api/wellnesshub', wellnessRoute);
 const accountRoutes = require("./routes/account.routes");
 app.use("/api/accounts", accountRoutes);
 // test GET

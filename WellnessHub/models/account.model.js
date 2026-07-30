@@ -38,69 +38,27 @@ const MealPlanSchema = mongoose.Schema({
 })
 
 const UserDataSchema = mongoose.Schema({
-    userPic: {
-        type: String,
-        required: false
-    },
-    height: {
-        type: Number,
-        unit: String,
-        required: true
-    },
+    userPic: String,
+    height: Number,
     activityLevel: {
         type: String,
-        enum: ["sedentary", "lightly active", "moderately active", "very active", "extra active"],
-        required: true
+        enum: ["sedentary", "lightly active", "moderately active", "very active", "extra active"]
     },
-    calorieGoal: {
-        type: Number
-    },
-    wellnessGoal: {
-        type: [String]
-    },
-    weightLog: {
-        type: [WeightLogSchema],
-        required: false
-    },
-    moodLog: {
-        type: [MoodLogSchema],
-        required: false
-    },
-    waterLog: {
-        type: [WaterLogSchema],
-        required: false
-    },
-    heartRateLog: {
-        type: [HeartRateLogSchema],
-        required: false
-    },
-    activityLog: {
-        type: [ActivityLogSchema],
-        required: false
-    },
-    sleepLog: {
-        type: [SleepLogSchema],
-        required: false
-    },
-    mealPlans: {
-        type: [MealPlanSchema],
-        required: false
-    }
+    calorieGoal: Number,
+    wellnessGoal: [String],
+    weightLog: [WeightLogSchema],
+    moodLog: [MoodLogSchema],
+    waterLog: [WaterLogSchema],
+    heartRateLog: [HeartRateLogSchema],
+    activityLog: [ActivityLogSchema],
+    sleepLog: [SleepLogSchema],
+    mealPlans: [MealPlanSchema]
 });
 
 const ProviderDataSchema = mongoose.Schema({
-    userPic: {
-        type: String,
-        required: false
-    },
-    bio: {
-        type: String,
-        required: false
-    },
-    speciality: {
-        type: String,
-        required: false
-    }
+    userPic: String,
+    bio: String,
+    speciality: String
 });
 
 const AdminDataSchema = mongoose.Schema({});
@@ -117,6 +75,11 @@ const AccountSchema = mongoose.Schema({
     accountType: {
         type: String,
         enum: ["user", "provider", "admin"],
+        required: true
+    },
+    isActive: {
+        type: Boolean,
+        default: false,
         required: true
     },
     $switch: {
