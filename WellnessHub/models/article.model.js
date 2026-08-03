@@ -22,7 +22,10 @@ const ArticleSchema = mongoose.Schema({
     },
     activity: ActivitySubSchema,
     meal: MealSubSchema,
-    isPublished: Boolean
+    isPublished: {
+        type: Boolean,
+        default: false
+    }
 }, { timestamps: true });
 
 const Article = mongoose.model("wh_article", ArticleSchema);
