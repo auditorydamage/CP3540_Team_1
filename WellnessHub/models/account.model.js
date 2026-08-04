@@ -102,13 +102,9 @@ const AccountSchema = mongoose.Schema({
         default: false,
         required: true
     },
-    $switch: {
-        branches: [
-            { case: {$eq: [ "accountType", "admin" ]}, then: {adminData: AdminDataSchema}},
-            { case: {$eq: [ "accountType", "provider" ]}, then: {providerData: ProviderDataSchema}}
-        ],
-        default: { userData: UserDataSchema }
-    }
+    adminData: AdminDataSchema,
+    providerData: ProviderDataSchema,
+    userData: UserDataSchema
 }, { timestamps: true });
 
 const Account = mongoose.model("wh_account", AccountSchema);
