@@ -24,3 +24,5 @@ Design/Class diagram.pdf
 Design/Class diagram.odg
 Design/Class diagram.pdf
 Design/Class diagram.odg
+node_modules/
+.env
