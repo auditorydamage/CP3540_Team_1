@@ -5,7 +5,9 @@ import { fetchArticle } from './article.controller.js';
 function ArticleDisplay ({articleId}) {
 
     const [ content, setContent ] = useState({articleId: "", author: "", title: "", category: "", activity: {activityType: "", body: ""}, meal: {name: "", cuisine: "", mealType: "", body: "", ingredients: []}});
-    setContent(fetchArticle(articleId));
+    useEffect(() => {
+        setContent(fetchArticle(articleId));
+    }, [articleId]);
 
     return (
         <>
