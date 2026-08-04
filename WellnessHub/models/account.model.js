@@ -3,18 +3,28 @@ const mongoose = require('mongoose');
 const WeightLogSchema = mongoose.Schema({
     date: Date,
     weight: Number,
-    unit: String
+    unit: {
+        type: String,
+        enum: ["kg", "lb"]
+    }
 });
 
 const MoodLogSchema = mongoose.Schema({
     date: Date,
-    mood: String
+    mood: {
+        type: Number,
+        min: 1,
+        max: 7
+    }
 });
 
 const WaterLogSchema = mongoose.Schema({
     date: Date,
     amount: Number,
-    unit: String
+    unit: {
+        type: String,
+        enum: ["ml", "fl. oz", "gal.", "glass", "cup"]
+    }
 });
 
 const HeartRateLogSchema = mongoose.Schema({
@@ -25,6 +35,15 @@ const HeartRateLogSchema = mongoose.Schema({
 const ActivityLogSchema = mongoose.Schema({
     date: Date,
     activity: String
+});
+
+const WalkingLogSchema = mongoose.Schema({
+    date: Date,
+    distance: Number,
+    unit: {
+        type: String,
+        enum: ["mi", "km", "yd", "ft", "steps"]
+    }
 });
 
 const SleepLogSchema = mongoose.Schema({
@@ -51,6 +70,7 @@ const UserDataSchema = mongoose.Schema({
     waterLog: [WaterLogSchema],
     heartRateLog: [HeartRateLogSchema],
     activityLog: [ActivityLogSchema],
+    walkingLog: [WalkingLogSchema],
     sleepLog: [SleepLogSchema],
     mealPlans: [MealPlanSchema]
 });
