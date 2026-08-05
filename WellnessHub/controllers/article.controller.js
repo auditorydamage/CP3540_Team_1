@@ -1,5 +1,5 @@
 const Article = require("../models/article.model");
-const jwt = require("jsonwebtoken");
+const Account = require("../models/account.model");
 
 const fetchArticle = async (req, res) => {
     try {
@@ -133,6 +133,22 @@ const fetchMealsByCuisine = async (req, res) => {
 
 const addArticle = async (req, res) => {
     try {
+        const account = await Account.findById(
+            req.account.accountId
+        );
+
+        if (!account) {
+            return res.status(404).json({
+                message: "Account not found."
+            });
+        }
+
+        if (account.accountType !== ("provider" || "admin")) {
+            return res.status(403).json({
+                message: "Only provider and admin accounts can add articles."
+            });
+        }
+
         const article = await new Article(req.body);
         await article.save();
         return res.status(201).json({
@@ -149,6 +165,22 @@ const addArticle = async (req, res) => {
 
 const updateArticle = async (req, res) => {
     try {
+        const account = await Account.findById(
+            req.account.accountId
+        );
+
+        if (!account) {
+            return res.status(404).json({
+                message: "Account not found."
+            });
+        }
+
+        if (account.accountType !== ("provider" || "admin")) {
+            return res.status(403).json({
+                message: "Only provider and admin accounts can update articles."
+            });
+        }
+
         const article = await Article.findByIdAndUpdate(req.params.id, req.body);
         if (!article) {
             return res.status(404).json({
@@ -170,6 +202,22 @@ const updateArticle = async (req, res) => {
 
 const publishArticle = async (req, res) => {
     try {
+        const account = await Account.findById(
+            req.account.accountId
+        );
+
+        if (!account) {
+            return res.status(404).json({
+                message: "Account not found."
+            });
+        }
+
+        if (account.accountType !== ("provider" || "admin")) {
+            return res.status(403).json({
+                message: "Only provider and admin accounts can publish articles."
+            });
+        }
+
         const article = await Article.findByIdAndUpdate(req.params.id, { isPublished: true });
         if (!article) {
             return res.status(404).json({
@@ -191,6 +239,22 @@ const publishArticle = async (req, res) => {
 
 const unpublishArticle = async (req, res) => {
     try {
+const account = await Account.findById(
+            req.account.accountId
+        );
+
+        if (!account) {
+            return res.status(404).json({
+                message: "Account not found."
+            });
+        }
+
+        if (account.accountType !== ("provider" || "admin")) {
+            return res.status(403).json({
+                message: "Only provider and admin accounts can unpublish articles."
+            });
+        }
+
         const article = await Article.findByIdAndUpdate(req.params.id, { isPublished: false });
         if (!article) {
             return res.status(404).json({
@@ -202,6 +266,7 @@ const unpublishArticle = async (req, res) => {
             message: "Article unpublished successfully.",
             article
         });
+
     } catch (error) {
         return res.status(500).json({
             message: "Unable to unpublish article.",
@@ -212,6 +277,22 @@ const unpublishArticle = async (req, res) => {
 
 const deleteArticle = async (req, res) => {
     try {
+const account = await Account.findById(
+            req.account.accountId
+        );
+
+        if (!account) {
+            return res.status(404).json({
+                message: "Account not found."
+            });
+        }
+
+        if (account.accountType !== ("provider" || "admin")) {
+            return res.status(403).json({
+                message: "Only provider and admin accounts can delete articles."
+            });
+        }
+
         const article = await Article.findByIdAndDelete(req.params.id);
         if (!article) {
             return res.status(404).json({

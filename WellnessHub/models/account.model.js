@@ -63,7 +63,6 @@ const UserDataSchema = mongoose.Schema({
         type: String,
         enum: ["sedentary", "lightly active", "moderately active", "very active", "extra active"]
     },
-    calorieGoal: Number,
     wellnessGoal: [String],
     weightLog: [WeightLogSchema],
     moodLog: [MoodLogSchema],
