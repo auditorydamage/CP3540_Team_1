@@ -13,8 +13,10 @@ app.use(cors());
 app.use(express.json());
 const accountRoutes = require("./routes/account.routes");
 const articleRoutes = require("./routes/article.routes");
+const waterRoutes = require("./routes/water.routes");
 app.use("/api/articles", articleRoutes);
 app.use("/api/accounts", accountRoutes);
+app.use("/api/water", waterRoutes);
 // test GET
 app.get('/', (req, res) => {
   res.send('GET works!');
