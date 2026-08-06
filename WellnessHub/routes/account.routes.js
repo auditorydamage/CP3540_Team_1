@@ -3,7 +3,10 @@ const router = express.Router();
 
 const {
     loginAccount,
-    getCurrentAccount
+    getCurrentAccount,
+    registerAccount,
+    activateAccount,
+    deleteAccount
 } = require("../controllers/account.controller");
 
 const {
@@ -12,7 +15,7 @@ const {
 
 // Public login route
 router.post("/login", loginAccount);
-router.post("/register", verifyToken,registerAccount);
+router.post("/register", registerAccount);
 router.put("/activate", verifyToken, activateAccount);
 router.delete("/delete", verifyToken, deleteAccount);
 

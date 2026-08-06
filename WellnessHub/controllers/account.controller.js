@@ -64,7 +64,7 @@ const loginAccount = async (req, res) => {
 
 const registerAccount = async (req, res) => {
     try {
-        const { username, password, accountType } = req.body;
+        const { username, password, accountType, emailAddress } = req.body;
         const existingUser = await Account.findOne({ username });
         if (existingUser) {
             return res.status(400).json({
@@ -77,7 +77,8 @@ const registerAccount = async (req, res) => {
         const newAccount = new Account({
             username,
             password: hashedPassword,
-            accountType
+            accountType,
+            emailAddress
         });
 
         await newAccount.save();
@@ -87,7 +88,8 @@ const registerAccount = async (req, res) => {
             account: {
                 id: newAccount._id,
                 username: newAccount.username,
-                accountType: newAccount.accountType
+                accountType: newAccount.accountType,
+                emailAddress: newAccount.emailAddress
             }
         });
     } catch (error) {
@@ -100,8 +102,10 @@ const registerAccount = async (req, res) => {
 
 const activateAccount = async (req, res) => {
     try {
-        const { username } = req.body;
-        const account = await Account.findOne({ username });
+        const account = await Account.findById(
+            req.account.accountId
+        ).select("-password");
+
         if (!account) {
             return res.status(404).json({
                 message: "Account not found."
@@ -127,6 +131,31 @@ const activateAccount = async (req, res) => {
         });
     }
 }
+
+const deleteAccount = async (req, res) => {
+    try {
+        const account = await Account.findById(
+            req.account.accountId
+        ).select("-password");
+
+        if (!account) {
+            return res.status(404).json({
+                message: "Account not found."
+            });
+        }
+
+        await account.remove();
+
+        return res.status(200).json({
+            message: "Account deleted successfully."
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Unable to delete account.",
+            error: error.message
+        });
+    }
+};
 
 const getCurrentAccount = async (req, res) => {
     try {
@@ -155,5 +184,8 @@ const getCurrentAccount = async (req, res) => {
 
 module.exports = {
     loginAccount,
-    getCurrentAccount
+    getCurrentAccount,
+    registerAccount,
+    activateAccount,
+    deleteAccount
 };

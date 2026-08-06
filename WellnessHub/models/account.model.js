@@ -86,6 +86,7 @@ const AccountSchema = mongoose.Schema({
     username: {
         type: String,
         required: true,
+        unique: true
     },
     password: {
         type: String,
@@ -95,6 +96,11 @@ const AccountSchema = mongoose.Schema({
         type: String,
         enum: ["user", "provider", "admin"],
         required: true
+    },
+    emailAddress: {
+        type: String,
+        required: true,
+        unique: true
     },
     isActive: {
         type: Boolean,
