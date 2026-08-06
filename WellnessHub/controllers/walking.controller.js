@@ -14,6 +14,12 @@ const addWalkingRecord = async (req, res) => {
             });
         }
 
+        if (!["mi", "km", "yd", "ft", "steps"].includes(unit)) {
+            return res.status(400).json({
+                message: "A valid unit is required."
+            });
+        }
+
         const account = await Account.findById(
             req.account.accountId
         );
