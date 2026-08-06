@@ -13,12 +13,14 @@ import MoodCheckIn from "./pages/MoodCheckIn";
 import Exercise from "./pages/Exercise";
 import Recipes from "./pages/Recipes";
 import Profile from "./pages/Profile";
+import Register from "./pages/Register";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
