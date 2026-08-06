@@ -84,6 +84,7 @@ const getMoodRecords = async (req, res) => {
         });
     }
 };
+
 // Update a mood record
 const updateMoodRecord = async (req, res) => {
     try {
@@ -112,16 +113,16 @@ const updateMoodRecord = async (req, res) => {
 
         const moodRecords = account.userData?.moodLog || [];
 
-const moodRecord = moodRecords.find(
-    record => String(record._id) === String(recordId).trim()
-);
-
-if (!moodRecord) {
-    return res.status(404).json({
-        message: "Mood record not found."
-           });
-}
-
+        const moodRecord = moodRecords.find(
+            record => String(record._id) === String(recordId).trim()
+        );
+        
+        if (!moodRecord) {
+            return res.status(404).json({
+                message: "Mood record not found."
+                   });
+        }
+        
         if (date) {
             moodRecord.date = date;
         }

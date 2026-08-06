@@ -143,7 +143,7 @@ const addArticle = async (req, res) => {
             });
         }
 
-        if (account.accountType !== ("provider" || "admin")) {
+        if (!["provider", "admin"].includes(account.accountType)) {
             return res.status(403).json({
                 message: "Only provider and admin accounts can add articles."
             });
@@ -175,7 +175,7 @@ const updateArticle = async (req, res) => {
             });
         }
 
-        if (account.accountType !== ("provider" || "admin")) {
+        if (!["provider", "admin"].includes(account.accountType)) {
             return res.status(403).json({
                 message: "Only provider and admin accounts can update articles."
             });
@@ -212,7 +212,7 @@ const publishArticle = async (req, res) => {
             });
         }
 
-        if (account.accountType !== ("provider" || "admin")) {
+        if (!["provider", "admin"].includes(account.accountType)) {
             return res.status(403).json({
                 message: "Only provider and admin accounts can publish articles."
             });
@@ -287,7 +287,7 @@ const account = await Account.findById(
             });
         }
 
-        if (account.accountType !== ("provider" || "admin")) {
+        if (!["provider", "admin"].includes(account.accountType)) {
             return res.status(403).json({
                 message: "Only provider and admin accounts can delete articles."
             });

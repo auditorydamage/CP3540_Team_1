@@ -66,9 +66,25 @@ const registerAccount = async (req, res) => {
     try {
         const { username, password, accountType, emailAddress } = req.body;
         const existingUser = await Account.findOne({ username });
+        const existingEmail = await Account.findOne({ emailAddress });
         if (existingUser) {
             return res.status(400).json({
                 message: "Username already exists."
+            });
+        }
+        if (existingEmail) {
+            return res.status(400).json({
+                message: "Email address already in use."
+            });
+        }
+        if (!username || !password || !accountType || !emailAddress) {
+            return res.status(400).json({
+                message: "All fields are required."
+            });
+        }
+        if (!["user", "provider", "admin"].includes(accountType)) {
+            return res.status(400).json({
+                message: "Invalid account type."
             });
         }
 
@@ -134,17 +150,13 @@ const activateAccount = async (req, res) => {
 
 const deleteAccount = async (req, res) => {
     try {
-        const account = await Account.findById(
-            req.account.accountId
-        ).select("-password");
+        const account = await Account.deleteOne(req.account.accountId);
 
         if (!account) {
             return res.status(404).json({
                 message: "Account not found."
             });
         }
-
-        await account.remove();
 
         return res.status(200).json({
             message: "Account deleted successfully."

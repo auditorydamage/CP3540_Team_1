@@ -101,7 +101,7 @@ const AccountSchema = mongoose.Schema({
         type: String,
         required: true,
         unique: true
-    },
+    },  
     isActive: {
         type: Boolean,
         default: false,
