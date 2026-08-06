@@ -62,6 +62,72 @@ const loginAccount = async (req, res) => {
     }
 };
 
+const registerAccount = async (req, res) => {
+    try {
+        const { username, password, accountType } = req.body;
+        const existingUser = await Account.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({
+                message: "Username already exists."
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newAccount = new Account({
+            username,
+            password: hashedPassword,
+            accountType
+        });
+
+        await newAccount.save();
+
+        return res.status(201).json({
+            message: "Account created successfully.",
+            account: {
+                id: newAccount._id,
+                username: newAccount.username,
+                accountType: newAccount.accountType
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Unable to register account.",
+            error: error.message
+        });
+    }
+};
+
+const activateAccount = async (req, res) => {
+    try {
+        const { username } = req.body;
+        const account = await Account.findOne({ username });
+        if (!account) {
+            return res.status(404).json({
+                message: "Account not found."
+            });
+        }
+
+        account.isActive = true;
+        await account.save();
+
+        return res.status(200).json({
+            message: "Account activated successfully.",
+            account: {
+                id: account._id,
+                username: account.username,
+                accountType: account.accountType,
+                isActive: account.isActive
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Unable to activate account.",
+            error: error.message
+        });
+    }
+}
+
 const getCurrentAccount = async (req, res) => {
     try {
         // Retrieve the authenticated account without returning its password.
