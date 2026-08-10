@@ -1,5 +1,7 @@
 const Article = require("../models/article.model");
 const Account = require("../models/account.model");
+const Likes = require('../models/likes.model');
+const jwt = require("jsonwebtoken");
 
 const fetchArticle = async (req, res) => {
     try {
@@ -105,6 +107,37 @@ const fetchActivitiesByType = async (req, res) => {
             articles
         });
 
+        const likes = await Account.find({ "likes.type": activityType});
+        if (!likes) {
+            const createLikes = async (req, res) => {
+                try {
+                    const newLikes = await new Likes("activity", activityType, 1);
+                    await Likes.save();
+                } catch (error) {
+                    return res.status(500).json({
+                        message: "Unable to create likes.",
+                        error: error.message
+                    });
+                }
+            };
+        } else {
+            try {
+                const updateLikes = async (req, res) => {
+                    const newLikes = {
+                        "category": "activity",
+                        "type": activityType,
+                        "number": +1
+                    };
+                    const updateLike = await Likes.findOneAndUpdate({type: activityType, newLikes});
+                }
+            } catch (error) {
+                return res.status(500).json({
+                    message: "Unable to update likes.",
+                    error: error.message
+                });
+            }
+        }
+
     } catch (error) {
         return res.status(500).json({
             message: "Unable to fetch activities.",
@@ -121,6 +154,41 @@ const fetchMealsByCuisine = async (req, res) => {
             return res.status(404).json({
                 message: "No meals found for the specified cuisine."
             });
+        }
+        return res.status(200).json({
+            message: "Meals fetched successfully.",
+            articles
+        });
+
+        const likes = await Account.find({ "likes.type": cuisine});
+        if (!likes) {
+            const createLikes = async (req, res) => {
+                try {
+                    const newLikes = await new Likes("meal", cuisine, 1);
+                    await Likes.save();
+                } catch (error) {
+                    return res.status(500).json({
+                        message: "Unable to create likes.",
+                        error: error.message
+                    });
+                }
+            };
+        } else {
+            try {
+                const updateLikes = async (req, res) => {
+                    const newLikes = {
+                        "category": "meal",
+                        "type": cuisine,
+                        "number": +1
+                    };
+                    const updateLike = await Likes.findOneAndUpdate({type: cuisine, newLikes});
+                }
+            } catch (error) {
+                return res.status(500).json({
+                    message: "Unable to update likes.",
+                    error: error.message
+                });
+            }
         }
     } catch (error) {
         return res.status(500).json({
