@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useWellness } from "../context/WellnessContext";
 
 const moodOptions = [
   { value: "great", emoji: "😄", label: "Great" },
@@ -9,6 +10,8 @@ const moodOptions = [
 ];
 
 function MoodCheckIn() {
+  const { setLatestMood } = useWellness();
+
   const [selectedMood, setSelectedMood] = useState("");
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
@@ -36,7 +39,12 @@ function MoodCheckIn() {
       })
     };
 
+    // Save locally on this page
     setSavedCheckIn(checkIn);
+
+    // Save to shared frontend state so Dashboard updates
+    setLatestMood(selectedMoodDetails);
+
     setMessage("Mood check-in saved successfully.");
     setSelectedMood("");
     setNote("");
@@ -65,9 +73,7 @@ function MoodCheckIn() {
     <div style={{ padding: "30px" }}>
       <h1>😊 Mood Check-In</h1>
 
-      <p>
-        Take a moment to record how you are feeling today.
-      </p>
+      <p>Take a moment to record how you are feeling today.</p>
 
       <form
         onSubmit={handleSubmit}
@@ -131,9 +137,7 @@ function MoodCheckIn() {
         </div>
 
         <div style={{ marginTop: "24px" }}>
-          <label htmlFor="moodNote">
-            Optional note
-          </label>
+          <label htmlFor="moodNote">Optional note</label>
 
           <textarea
             id="moodNote"
@@ -217,9 +221,7 @@ function MoodCheckIn() {
             </strong>
           </p>
 
-          <p>
-            Recorded at {savedCheckIn.time}
-          </p>
+          <p>Recorded at {savedCheckIn.time}</p>
 
           {savedCheckIn.note && (
             <p>
@@ -240,6 +242,7 @@ function MoodCheckIn() {
             }}
           >
             <strong>Wellness suggestion:</strong>
+
             <p style={{ marginBottom: 0 }}>
               {getSuggestion()}
             </p>

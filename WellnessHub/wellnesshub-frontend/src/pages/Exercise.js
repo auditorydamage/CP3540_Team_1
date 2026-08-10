@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useWellness } from "../context/WellnessContext";
 
 const exerciseOptions = [
   "Walking",
@@ -14,7 +15,12 @@ const exerciseOptions = [
 const intensityOptions = ["Low", "Moderate", "High"];
 
 function Exercise() {
-  const [dailyGoal, setDailyGoal] = useState(45);
+  const {
+    exerciseMinutes,
+    setExerciseMinutes,
+    exerciseGoal,
+    setExerciseGoal
+  } = useWellness();
 
   const [formData, setFormData] = useState({
     exerciseType: "Walking",
@@ -61,6 +67,8 @@ function Exercise() {
       ...currentActivities
     ]);
 
+    setExerciseMinutes((currentMinutes) => currentMinutes + duration);
+
     setFormData((currentData) => ({
       ...currentData,
       duration: ""
@@ -70,6 +78,16 @@ function Exercise() {
   }
 
   function handleDelete(activityId) {
+    const activityToRemove = activities.find(
+      (activity) => activity.id === activityId
+    );
+
+    if (activityToRemove) {
+      setExerciseMinutes((currentMinutes) =>
+        Math.max(currentMinutes - activityToRemove.duration, 0)
+      );
+    }
+
     setActivities((currentActivities) =>
       currentActivities.filter(
         (activity) => activity.id !== activityId
@@ -81,29 +99,25 @@ function Exercise() {
 
   function handleClearActivities() {
     setActivities([]);
+    setExerciseMinutes(0);
     setMessage("");
   }
 
-  const totalMinutes = activities.reduce(
-    (total, activity) => total + activity.duration,
-    0
-  );
-
   const progressPercentage =
-    dailyGoal > 0
-      ? Math.min((totalMinutes / dailyGoal) * 100, 100)
+    exerciseGoal > 0
+      ? Math.min((exerciseMinutes / exerciseGoal) * 100, 100)
       : 0;
 
   const goalReached =
-    dailyGoal > 0 && totalMinutes >= dailyGoal;
+    exerciseGoal > 0 && exerciseMinutes >= exerciseGoal;
 
   return (
     <div style={{ padding: "30px" }}>
       <h1>🏃 Exercise Tracker</h1>
 
       <p>
-        Record your exercise and track your progress toward
-        today's activity goal.
+        Record your exercise and track your progress toward today's activity
+        goal.
       </p>
 
       <section
@@ -137,7 +151,7 @@ function Exercise() {
                 fontWeight: "700"
               }}
             >
-              {totalMinutes} / {dailyGoal} minutes
+              {exerciseMinutes} / {exerciseGoal} minutes
             </p>
 
             <p style={{ color: "#667085" }}>
@@ -150,17 +164,17 @@ function Exercise() {
           </div>
 
           <div>
-            <label htmlFor="dailyGoal">
+            <label htmlFor="exerciseGoal">
               Daily goal in minutes
             </label>
 
             <input
-              id="dailyGoal"
+              id="exerciseGoal"
               type="number"
               min="1"
-              value={dailyGoal}
+              value={exerciseGoal}
               onChange={(event) =>
-                setDailyGoal(Number(event.target.value))
+                setExerciseGoal(Number(event.target.value))
               }
               style={{
                 ...inputStyle,
@@ -228,8 +242,7 @@ function Exercise() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns:
-              "repeat(3, minmax(0, 1fr))",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
             gap: "20px"
           }}
         >
@@ -304,9 +317,7 @@ function Exercise() {
               marginTop: "20px",
               padding: "12px",
               borderRadius: "7px",
-              backgroundColor: message.includes(
-                "successfully"
-              )
+              backgroundColor: message.includes("successfully")
                 ? "#e6f4df"
                 : "#fde8df",
               color: message.includes("successfully")
@@ -396,22 +407,12 @@ function Exercise() {
                 }}
               >
                 <div>
-                  <h3
-                    style={{
-                      margin: "0 0 8px"
-                    }}
-                  >
-                    {getExerciseEmoji(
-                      activity.exerciseType
-                    )}{" "}
+                  <h3 style={{ margin: "0 0 8px" }}>
+                    {getExerciseEmoji(activity.exerciseType)}{" "}
                     {activity.exerciseType}
                   </h3>
 
-                  <p
-                    style={{
-                      margin: "0 0 5px"
-                    }}
-                  >
+                  <p style={{ margin: "0 0 5px" }}>
                     {activity.duration} minutes ·{" "}
                     {activity.intensity} intensity
                   </p>

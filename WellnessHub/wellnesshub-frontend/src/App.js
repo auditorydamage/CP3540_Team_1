@@ -14,9 +14,11 @@ import Exercise from "./pages/Exercise";
 import Recipes from "./pages/Recipes";
 import Profile from "./pages/Profile";
 import Register from "./pages/Register";
+import { WellnessProvider } from "./context/WellnessContext";
 
 function App() {
   return (
+  <WellnessProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -35,6 +37,7 @@ function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
+  </WellnessProvider>
   );
 }
 
