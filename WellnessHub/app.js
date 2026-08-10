@@ -19,6 +19,7 @@ const walkingRoutes = require("./routes/walking.routes");
 const heartrateRoutes = require("./routes/heartrate.routes");
 const sleepRoutes = require("./routes/sleep.routes");
 const weightRoutes = require("./routes/weight.routes");
+const mealPlanRoutes = require("./routes/mealplan.routes");
 
 app.use("/api/mood", moodRoutes);
 app.use("/api/walking", walkingRoutes);
@@ -28,6 +29,7 @@ app.use("/api/articles", articleRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/water", waterRoutes);
 app.use("/api/weight", weightRoutes);
+app.use("/api/mealplans", mealPlanRoutes);
 
 // test GET
 app.get('/', (req, res) => {
