@@ -9,12 +9,36 @@ const {
 } = require("../controllers/walking.controller");
 
 const {
-    verifyToken
+    verifyToken,
+    authorizeRoles
 } = require("../middleware/auth.middleware");
 
-router.post("/", verifyToken, addWalkingRecord);
-router.get("/", verifyToken, getWalkingRecords);
-router.put("/:recordId", verifyToken, updateWalkingRecord);
-router.delete("/:recordId", verifyToken, deleteWalkingRecord);
+router.post(
+    "/",
+    verifyToken,
+    authorizeRoles("user"),
+    addWalkingRecord
+);
+
+router.get(
+    "/",
+    verifyToken,
+    authorizeRoles("user"),
+    getWalkingRecords
+);
+
+router.put(
+    "/:recordId",
+    verifyToken,
+    authorizeRoles("user"),
+    updateWalkingRecord
+);
+
+router.delete(
+    "/:recordId",
+    verifyToken,
+    authorizeRoles("user"),
+    deleteWalkingRecord
+);
 
 module.exports = router;

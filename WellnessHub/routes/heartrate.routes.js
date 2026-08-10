@@ -9,12 +9,36 @@ const {
 } = require("../controllers/heartrate.controller");
 
 const {
-    verifyToken
+    verifyToken,
+    authorizeRoles
 } = require("../middleware/auth.middleware");
 
-router.post("/", verifyToken, addHeartRateRecord);
-router.get("/", verifyToken, getHeartRateRecords);
-router.put("/:recordId", verifyToken, updateHeartRateRecord);
-router.delete("/:recordId", verifyToken, deleteHeartRateRecord);
+router.post(
+    "/",
+    verifyToken,
+    authorizeRoles("user"),
+    addHeartRateRecord
+);
+
+router.get(
+    "/",
+    verifyToken,
+    authorizeRoles("user"),
+    getHeartRateRecords
+);
+
+router.put(
+    "/:recordId",
+    verifyToken,
+    authorizeRoles("user"),
+    updateHeartRateRecord
+);
+
+router.delete(
+    "/:recordId",
+    verifyToken,
+    authorizeRoles("user"),
+    deleteHeartRateRecord
+);
 
 module.exports = router;
