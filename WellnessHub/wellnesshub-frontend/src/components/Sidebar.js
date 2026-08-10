@@ -47,6 +47,10 @@ function Sidebar() {
           🍎 Recipes
         </NavLink>
 
+        <NavLink to="/articles" style={linkStyle}>
+          📚 Articles
+        </NavLink>
+
         <NavLink to="/profile" style={linkStyle}>
           👤 Profile
         </NavLink>

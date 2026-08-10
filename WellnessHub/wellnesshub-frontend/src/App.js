@@ -15,6 +15,8 @@ import Recipes from "./pages/Recipes";
 import Profile from "./pages/Profile";
 import Register from "./pages/Register";
 import { WellnessProvider } from "./context/WellnessContext";
+import Articles from "./pages/Articles";
+import ArticleDetails from "./pages/ArticleDetails";
 
 function App() {
   return (
@@ -25,13 +27,15 @@ function App() {
         <Route path="/register" element={<Register />} />
 
         <Route element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/water" element={<WaterTracker />} />
-          <Route path="/mood" element={<MoodCheckIn />} />
-          <Route path="/exercise" element={<Exercise />} />
-          <Route path="/recipes" element={<Recipes />} />
-          <Route path="/profile" element={<Profile />} />
-        </Route>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/water" element={<WaterTracker />} />
+        <Route path="/mood" element={<MoodCheckIn />} />
+        <Route path="/exercise" element={<Exercise />} />
+        <Route path="/recipes" element={<Recipes />} />
+        <Route path="/articles" element={<Articles />} />
+        <Route path="/articles/:id" element={<ArticleDetails />} />
+        <Route path="/profile" element={<Profile />} />
+      </Route>
 
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
