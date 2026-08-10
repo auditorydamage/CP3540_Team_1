@@ -3,13 +3,12 @@ const Account = require("../models/account.model");
 
 const fetchArticle = async (req, res) => {
     try {
-        const article = await Article.findById(req.params.id);
+        const article = await Article.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
         if (!article) {
             return res.status(404).json({
                 message: "Article not found."
-            });
+            })
         }
-        
         return res.status(200).json({
             message: "Article fetched successfully.",
             article
@@ -149,8 +148,7 @@ const addArticle = async (req, res) => {
             });
         }
 
-        const article = await new Article(req.body);
-        await article.save();
+        const article = await Article.create(req.body);
         return res.status(201).json({
             message: "Article added successfully.",
             article
@@ -239,7 +237,7 @@ const publishArticle = async (req, res) => {
 
 const unpublishArticle = async (req, res) => {
     try {
-const account = await Account.findById(
+            const account = await Account.findById(
             req.account.accountId
         );
 
@@ -249,7 +247,7 @@ const account = await Account.findById(
             });
         }
 
-        if (account.accountType !== ("provider" || "admin")) {
+        if (!["provider", "admin"].includes(account.accountType)) {
             return res.status(403).json({
                 message: "Only provider and admin accounts can unpublish articles."
             });
@@ -277,7 +275,7 @@ const account = await Account.findById(
 
 const deleteArticle = async (req, res) => {
     try {
-const account = await Account.findById(
+        const account = await Account.findById(
             req.account.accountId
         );
 
