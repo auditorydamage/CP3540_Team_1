@@ -1,10 +1,9 @@
 const jwt = require("jsonwebtoken");
 
+// Verify the JWT token
 const verifyToken = (req, res, next) => {
-    // Get the token from the Authorization header
     const authorizationHeader = req.headers.authorization;
 
-    // Check that the header contains a Bearer token
     if (
         !authorizationHeader ||
         !authorizationHeader.startsWith("Bearer ")
@@ -14,17 +13,20 @@ const verifyToken = (req, res, next) => {
         });
     }
 
-    // Extract the token
     const token = authorizationHeader.split(" ")[1];
 
+    if (!token) {
+        return res.status(401).json({
+            message: "Authentication token is required."
+        });
+    }
+
     try {
-        // Verify and decode the token
         const decodedToken = jwt.verify(
             token,
             process.env.JWT_SECRET
         );
 
-        // Pass the account information to the next function
         req.account = decodedToken;
         next();
     } catch (error) {
@@ -34,6 +36,26 @@ const verifyToken = (req, res, next) => {
     }
 };
 
+// Check whether the account has an allowed role
+const authorizeRoles = (...allowedRoles) => {
+    return (req, res, next) => {
+        if (!req.account) {
+            return res.status(401).json({
+                message: "Authentication is required."
+            });
+        }
+
+        if (!allowedRoles.includes(req.account.accountType)) {
+            return res.status(403).json({
+                message: "You do not have permission to access this resource."
+            });
+        }
+
+        next();
+    };
+};
+
 module.exports = {
-    verifyToken
+    verifyToken,
+    authorizeRoles
 };

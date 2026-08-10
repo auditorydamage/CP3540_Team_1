@@ -9,12 +9,36 @@ const {
 } = require("../controllers/water.controller");
 
 const {
-    verifyToken
+    verifyToken,
+    authorizeRoles
 } = require("../middleware/auth.middleware");
 
-router.post("/", verifyToken, addWaterRecord);
-router.get("/", verifyToken, getWaterRecords);
-router.put("/:recordId", verifyToken, updateWaterRecord);
-router.delete("/:recordId", verifyToken, deleteWaterRecord);
+router.post(
+    "/",
+    verifyToken,
+    authorizeRoles("user"),
+    addWaterRecord
+);
+
+router.get(
+    "/",
+    verifyToken,
+    authorizeRoles("user"),
+    getWaterRecords
+);
+
+router.put(
+    "/:recordId",
+    verifyToken,
+    authorizeRoles("user"),
+    updateWaterRecord
+);
+
+router.delete(
+    "/:recordId",
+    verifyToken,
+    authorizeRoles("user"),
+    deleteWaterRecord
+);
 
 module.exports = router;
