@@ -17,6 +17,7 @@ const waterRoutes = require("./routes/water.routes");
 const moodRoutes = require("./routes/mood.routes");
 const walkingRoutes = require("./routes/walking.routes");
 const heartrateRoutes = require("./routes/heartrate.routes");
+const weightRoutes = require("./routes/weight.routes");
 
 app.use("/api/mood", moodRoutes);
 app.use("/api/walking", walkingRoutes);
@@ -24,6 +25,8 @@ app.use("/api/heartrate", heartrateRoutes);
 app.use("/api/articles", articleRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/water", waterRoutes);
+app.use("/api/weight", weightRoutes);
+
 // test GET
 app.get('/', (req, res) => {
   res.send('GET works!');
