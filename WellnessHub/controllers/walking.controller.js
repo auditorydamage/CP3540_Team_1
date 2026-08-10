@@ -1,20 +1,22 @@
 const Account = require("../models/account.model");
 
-
-const allowedUnits = ["ml", "fl. oz", "gal.", "glass", "cup"];
-
-// Add a water record
-const addWaterRecord = async (req, res) => {
+// Add a walking record
+const addWalkingRecord = async (req, res) => {
     try {
-        const { amount, unit, date } = req.body;
+        const { date, distance, unit } = req.body;
 
         if (
-            typeof amount !== "number" ||
-            amount <= 0 ||
-            !allowedUnits.includes(unit)
+            typeof distance !== "number" ||
+            distance < 0 
         ) {
             return res.status(400).json({
-                message: "A positive amount and valid unit are required."
+                message: "A valid distance is required."
+            });
+        }
+
+        if (!["mi", "km", "yd", "ft", "steps"].includes(unit)) {
+            return res.status(400).json({
+                message: "A valid unit is required."
             });
         }
 
@@ -30,7 +32,7 @@ const addWaterRecord = async (req, res) => {
 
         if (account.accountType !== "user") {
             return res.status(403).json({
-                message: "Water tracking is available only to user accounts."
+                message: "Walking tracking is available only to user accounts."
             });
         }
 
@@ -38,38 +40,37 @@ const addWaterRecord = async (req, res) => {
             account.userData = {};
         }
 
-        
-        account.userData.waterLog.push({
+        account.userData.walkingLog.push({
             date: date || new Date(),
-            amount,
-            unit
+            distance: distance,
+            unit: unit
         });
 
         await account.save();
 
         const newRecord =
-            account.userData.waterLog[
-                account.userData.waterLog.length - 1
+            account.userData.walkingLog[
+                account.userData.walkingLog.length - 1
             ];
 
         return res.status(201).json({
-            message: "Water record added successfully.",
-            waterRecord: newRecord
+            message: "Walking record added successfully.",
+            walkingRecord: newRecord
         });
     } catch (error) {
         return res.status(500).json({
-            message: "Unable to add water record.",
+            message: "Unable to add walking record.",
             error: error.message
         });
     }
 };
 
-// Retrieve all water records
-const getWaterRecords = async (req, res) => {
+// Retrieve all walking records
+const getWalkingRecords = async (req, res) => {
     try {
         const account = await Account.findById(
             req.account.accountId
-        ).select("userData.waterLog");
+        ).select("userData.walkingLog");
 
         if (!account) {
             return res.status(404).json({
@@ -79,29 +80,28 @@ const getWaterRecords = async (req, res) => {
         
 
         return res.status(200).json({
-            message: "Water records retrieved successfully.",
-            waterRecords: account.userData?.waterLog || []
+            message: "Walking records retrieved successfully.",
+            walkingRecords: account.userData?.walkingLog || []
         });
     } catch (error) {
         return res.status(500).json({
-            message: "Unable to retrieve water records.",
+            message: "Unable to retrieve walking records.",
             error: error.message
         });
     }
 };
-// Update a water record
-const updateWaterRecord = async (req, res) => {
+// Update a walking record
+const updateWalkingRecord = async (req, res) => {
     try {
         const { recordId } = req.params;
-        const { amount, unit, date } = req.body;
+        const { date, distance, unit } = req.body;
 
         if (
-            typeof amount !== "number" ||
-            amount <= 0 ||
-            !allowedUnits.includes(unit)
+            typeof distance !== "number" ||
+            distance < 0
         ) {
             return res.status(400).json({
-                message: "A positive amount and valid unit are required."
+                message: "A valid distance is required."
             });
         }
 
@@ -115,41 +115,38 @@ const updateWaterRecord = async (req, res) => {
             });
         }
 
-        const waterRecords = account.userData?.waterLog || [];
+        const walkingRecords = account.userData?.walkingLog || [];
 
-const waterRecord = waterRecords.find(
+const walkingRecord = walkingRecords.find(
     record => String(record._id) === String(recordId).trim()
 );
 
-if (!waterRecord) {
+if (!walkingRecord) {
     return res.status(404).json({
-        message: "Water record not found."
+        message: "Walking record not found."
            });
 }
 
-        waterRecord.amount = amount;
-        waterRecord.unit = unit;
-
         if (date) {
-            waterRecord.date = date;
+            walkingRecord.date = date;
         }
 
         await account.save();
 
         return res.status(200).json({
-            message: "Water record updated successfully.",
-            waterRecord
+            message: "Walking record updated successfully.",
+            walkingRecord
         });
     } catch (error) {
         return res.status(500).json({
-            message: "Unable to update water record.",
+            message: "Unable to update walking record.",
             error: error.message
         });
     }
 };
 
-// Delete a water record
-const deleteWaterRecord = async (req, res) => {
+// Delete a walking record
+const deleteWalkingRecord = async (req, res) => {
     try {
         const { recordId } = req.params;
 
@@ -163,39 +160,39 @@ const deleteWaterRecord = async (req, res) => {
             });
         }
 
-        const waterRecords = account.userData?.waterLog || [];
+        const walkingRecords = account.userData?.walkingLog || [];
 
-        const recordIndex = waterRecords.findIndex(
+        const recordIndex = walkingRecords.findIndex(
             record =>
                 String(record._id) === String(recordId).trim()
         );
 
         if (recordIndex === -1) {
             return res.status(404).json({
-                message: "Water record not found."
+                message: "Walking record not found."
             });
         }
 
-        const deletedRecord = waterRecords[recordIndex];
+        const deletedRecord = walkingRecords[recordIndex];
 
-        waterRecords.splice(recordIndex, 1);
+        walkingRecords.splice(recordIndex, 1);
         await account.save();
 
         return res.status(200).json({
-            message: "Water record deleted successfully.",
-            waterRecord: deletedRecord
+            message: "Walking record deleted successfully.",
+            walkingRecord: deletedRecord
         });
     } catch (error) {
         return res.status(500).json({
-            message: "Unable to delete water record.",
+            message: "Unable to delete walking record.",
             error: error.message
         });
     }
 };
     
 module.exports = {
-    addWaterRecord,
-    getWaterRecords,
-    updateWaterRecord,
-    deleteWaterRecord
+    addWalkingRecord,
+    getWalkingRecords,
+    updateWalkingRecord,
+    deleteWalkingRecord
 };

@@ -63,7 +63,6 @@ const UserDataSchema = mongoose.Schema({
         type: String,
         enum: ["sedentary", "lightly active", "moderately active", "very active", "extra active"]
     },
-    calorieGoal: Number,
     wellnessGoal: [String],
     weightLog: [WeightLogSchema],
     moodLog: [MoodLogSchema],
@@ -87,6 +86,7 @@ const AccountSchema = mongoose.Schema({
     username: {
         type: String,
         required: true,
+        unique: true
     },
     password: {
         type: String,
@@ -97,6 +97,11 @@ const AccountSchema = mongoose.Schema({
         enum: ["user", "provider", "admin"],
         required: true
     },
+    emailAddress: {
+        type: String,
+        required: true,
+        unique: true
+    },  
     isActive: {
         type: Boolean,
         default: false,
