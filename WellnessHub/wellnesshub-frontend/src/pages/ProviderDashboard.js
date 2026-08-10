@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArticleDisplay, ArticleEditor } from "../components/Article.js";
+import { ArticleEditor } from "../components/Article.js";
 
 function ProviderDashboard() {
   const [articles, setArticles] = useState([]);
@@ -7,9 +7,13 @@ function ProviderDashboard() {
 
   useEffect(() => {
     async function fetchArticles(author) {
-      const data = await fetch(`http://localhost:3000/api/articles/author/${author}`);
-      const fetchedArticles = await data.json();
-      setArticles(fetchedArticles.articles);
+      try {
+        const data = await fetch(`http://localhost:3000/api/articles/author/${author}`);
+        const fetchedArticles = await data.json();
+        setArticles(fetchedArticles.articles);
+      } catch (error) {
+        console.error("Error fetching articles:", error);
+      }
     }
      fetchArticles("markphoenix");
   }, []);
@@ -47,24 +51,22 @@ function ProviderDashboard() {
               </tr>
             </thead>
             <tbody>
-          { articles.map((article) => {
-              return (
-                <>
-                  <tr key={article._id}>
-                    <td>{article.title}</td>
-                    <td>{article.category}</td>
-                    <td>{article.isPublished ? "Published" : "Draft"}</td>
-                  </tr>
-                  <tr>
-                    <td><button>Edit</button></td>
-                    <td><button>{ article.isPublished ? "Unpublish" : "Publish" }</button></td>
-                    <td><button>Delete</button></td>
-                  </tr>
-                </>
-              )
-            }
-          ) }
-          </tbody>
+            { !articles ? null : articles.map((article) => {
+                return (
+                  <>
+                    <tr key={article._id}>
+                      <td>{article.title}</td>
+                      <td>{article.category}</td>
+                      <td>{article.isPublished ? "Published" : "Draft"}</td>
+                      <td><button>Edit</button></td>
+                      <td><button>{ article.isPublished ? "Unpublish" : "Publish" }</button></td>
+                      <td><button>Delete</button></td>
+                    </tr>
+                  </>
+                )
+              }
+            )}
+            </tbody>
           </table>
         </div>
 
@@ -78,6 +80,7 @@ function ProviderDashboard() {
           }}
         >
           <h3>Create an Article</h3>
+          <ArticleEditor />
         </div>
       </div>
     </div>
