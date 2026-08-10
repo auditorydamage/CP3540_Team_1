@@ -62,113 +62,6 @@ const loginAccount = async (req, res) => {
     }
 };
 
-const registerAccount = async (req, res) => {
-    try {
-        const { username, password, accountType, emailAddress } = req.body;
-        const existingUser = await Account.findOne({ username });
-        const existingEmail = await Account.findOne({ emailAddress });
-        if (existingUser) {
-            return res.status(400).json({
-                message: "Username already exists."
-            });
-        }
-        if (existingEmail) {
-            return res.status(400).json({
-                message: "Email address already in use."
-            });
-        }
-        if (!username || !password || !accountType || !emailAddress) {
-            return res.status(400).json({
-                message: "All fields are required."
-            });
-        }
-        if (!["user", "provider", "admin"].includes(accountType)) {
-            return res.status(400).json({
-                message: "Invalid account type."
-            });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const newAccount = new Account({
-            username,
-            password: hashedPassword,
-            accountType,
-            emailAddress
-        });
-
-        await newAccount.save();
-
-        return res.status(201).json({
-            message: "Account created successfully.",
-            account: {
-                id: newAccount._id,
-                username: newAccount.username,
-                accountType: newAccount.accountType,
-                emailAddress: newAccount.emailAddress
-            }
-        });
-    } catch (error) {
-        return res.status(500).json({
-            message: "Unable to register account.",
-            error: error.message
-        });
-    }
-};
-
-const activateAccount = async (req, res) => {
-    try {
-        const account = await Account.findById(
-            req.account.accountId
-        ).select("-password");
-
-        if (!account) {
-            return res.status(404).json({
-                message: "Account not found."
-            });
-        }
-
-        account.isActive = true;
-        await account.save();
-
-        return res.status(200).json({
-            message: "Account activated successfully.",
-            account: {
-                id: account._id,
-                username: account.username,
-                accountType: account.accountType,
-                isActive: account.isActive
-            }
-        });
-    } catch (error) {
-        return res.status(500).json({
-            message: "Unable to activate account.",
-            error: error.message
-        });
-    }
-}
-
-const deleteAccount = async (req, res) => {
-    try {
-        const account = await Account.deleteOne(req.account.accountId);
-
-        if (!account) {
-            return res.status(404).json({
-                message: "Account not found."
-            });
-        }
-
-        return res.status(200).json({
-            message: "Account deleted successfully."
-        });
-    } catch (error) {
-        return res.status(500).json({
-            message: "Unable to delete account.",
-            error: error.message
-        });
-    }
-};
-
 const getCurrentAccount = async (req, res) => {
     try {
         // Retrieve the authenticated account without returning its password.
@@ -196,8 +89,5 @@ const getCurrentAccount = async (req, res) => {
 
 module.exports = {
     loginAccount,
-    getCurrentAccount,
-    registerAccount,
-    activateAccount,
-    deleteAccount
+    getCurrentAccount
 };

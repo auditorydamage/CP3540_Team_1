@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Likes = require("../models/likes.model").schema;
 
 const WeightLogSchema = mongoose.Schema({
     date: Date,
@@ -63,6 +64,7 @@ const UserDataSchema = mongoose.Schema({
         type: String,
         enum: ["sedentary", "lightly active", "moderately active", "very active", "extra active"]
     },
+    calorieGoal: Number,
     wellnessGoal: [String],
     weightLog: [WeightLogSchema],
     moodLog: [MoodLogSchema],
@@ -86,7 +88,6 @@ const AccountSchema = mongoose.Schema({
     username: {
         type: String,
         required: true,
-        unique: true
     },
     password: {
         type: String,
@@ -97,11 +98,6 @@ const AccountSchema = mongoose.Schema({
         enum: ["user", "provider", "admin"],
         required: true
     },
-    emailAddress: {
-        type: String,
-        required: true,
-        unique: true
-    },  
     isActive: {
         type: Boolean,
         default: false,
@@ -109,7 +105,8 @@ const AccountSchema = mongoose.Schema({
     },
     adminData: AdminDataSchema,
     providerData: ProviderDataSchema,
-    userData: UserDataSchema
+    userData: UserDataSchema,
+    Likes
 }, { timestamps: true });
 
 const Account = mongoose.model("wh_account", AccountSchema);
