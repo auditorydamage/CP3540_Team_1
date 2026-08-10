@@ -1,12 +1,21 @@
 import Markdown from 'react-markdown';
-import { useState } from 'react';
-import { fetchArticle } from './article.controller.js';
+import { useState, useEffect } from 'react';
 
 function ArticleDisplay ({articleId}) {
 
     const [ content, setContent ] = useState({articleId: "", author: "", title: "", category: "", activity: {activityType: "", body: ""}, meal: {name: "", cuisine: "", mealType: "", body: "", ingredients: []}});
+    
     useEffect(() => {
-        setContent(fetchArticle(articleId));
+        async function fetchContent() {
+            try {
+                const response = await fetch(`http://localhost:3000/api/articles/${articleId}`);
+                const data = await response.json();
+                setContent(data.article);
+            } catch (error) {
+                console.error("Error fetching article content:", error);
+            }
+        }
+        fetchContent();
     }, [articleId]);
 
     return (
@@ -41,6 +50,13 @@ function ArticleEditor () {
         <>
             <div className="article-editor">
                 <form onSubmit={handleSubmit}>
+                    <label>Category:</label>
+                    <select value={content.category} onChange={handleChange}>
+                        <option value="activity">Activity</option>
+                        <option value="meal">Meal</option>
+                    </select>
+                    <label>Author:</label>
+                    <textarea value={content.author} />
                     <label>Title:</label>
                     <textarea value={content.title} />
                     <label>Enter content here in Markdown format:</label>
