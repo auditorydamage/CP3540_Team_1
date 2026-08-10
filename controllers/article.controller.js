@@ -1,8 +1,7 @@
 const Account = require("../models/account.model");
+const Likes = require('../models/likes.model');
 const Article = require("../models/article.model");
 const jwt = require("jsonwebtoken");
-
-const likes = [];
 
 const fetchArticle = async (req, res) => {
     try {
@@ -109,19 +108,35 @@ const fetchActivitiesByType = async (req, res) => {
             articles
         });
 
-        const findActivity = likes.includes(activityType);
-        if (!findActivity) {
-            const obj = {
-                category: "activity",
-                type: activityType,
-                likes: 1
+        const likes = await Account.find({ "likes.type": activityType});
+        if (!likes) {
+            const createLikes = async (req, res) => {
+                try {
+                    const newLikes = await new Likes("activity", activityType, 1);
+                    await Likes.save();
+                } catch (error) {
+                    return res.status(500).json({
+                        message: "Unable to create likes.",
+                        error: error.message
+                    });
+                }
             };
-            likes.push(obj);
         } else {
-             const index = likes.findIndex(function (like) {
-                return like.type === activityType;
-             });
-             likes[index][2] += 1;
+            try {
+                const updateLikes = async (req, res) => {
+                    const newLikes = {
+                        "category": "activity",
+                        "type": activityType,
+                        "number": +1
+                    };
+                    const updateLike = await Likes.findOneAndUpdate({type: activityType, newLikes});
+                }
+            } catch (error) {
+                return res.status(500).json({
+                    message: "Unable to update likes.",
+                    error: error.message
+                });
+            }
         }
 
     } catch (error) {
@@ -148,19 +163,35 @@ const fetchMealsByCuisine = async (req, res) => {
             articles
         });
 
-        const findCuisine = likes.includes(cuisine);
-        if (!findCuisine) {
-            const obj = {
-                category: "meal",
-                type: cuisine,
-                likes: 1
+        const likes = await Account.find({ "likes.type": cuisine});
+        if (!likes) {
+            const createLikes = async (req, res) => {
+                try {
+                    const newLikes = await new Likes("meal", cuisine, 1);
+                    await Likes.save();
+                } catch (error) {
+                    return res.status(500).json({
+                        message: "Unable to create likes.",
+                        error: error.message
+                    });
+                }
             };
-            likes.push(obj);
         } else {
-            const index = likes.findIndex(function (like) {
-                return like.type === cuisine;
-             });
-             likes[index][2] += 1;
+            try {
+                const updateLikes = async (req, res) => {
+                    const newLikes = {
+                        "category": "meal",
+                        "type": cuisine,
+                        "number": +1
+                    };
+                    const updateLike = await Likes.findOneAndUpdate({type: cuisine, newLikes});
+                }
+            } catch (error) {
+                return res.status(500).json({
+                    message: "Unable to update likes.",
+                    error: error.message
+                });
+            }
         }
 
     } catch (error) {
