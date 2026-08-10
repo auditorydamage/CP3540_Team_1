@@ -1,5 +1,7 @@
-const Article = require("../models/article.model");
 const Account = require("../models/account.model");
+const Likes = require('../models/likes.model');
+const Article = require("../models/article.model");
+const jwt = require("jsonwebtoken");
 
 const fetchArticle = async (req, res) => {
     try {
@@ -106,6 +108,37 @@ const fetchActivitiesByType = async (req, res) => {
             articles
         });
 
+        const likes = await Account.find({ "likes.type": activityType});
+        if (!likes) {
+            const createLikes = async (req, res) => {
+                try {
+                    const newLikes = await new Likes("activity", activityType, 1);
+                    await Likes.save();
+                } catch (error) {
+                    return res.status(500).json({
+                        message: "Unable to create likes.",
+                        error: error.message
+                    });
+                }
+            };
+        } else {
+            try {
+                const updateLikes = async (req, res) => {
+                    const newLikes = {
+                        "category": "activity",
+                        "type": activityType,
+                        "number": +1
+                    };
+                    const updateLike = await Likes.findOneAndUpdate({type: activityType, newLikes});
+                }
+            } catch (error) {
+                return res.status(500).json({
+                    message: "Unable to update likes.",
+                    error: error.message
+                });
+            }
+        }
+
     } catch (error) {
         return res.status(500).json({
             message: "Unable to fetch activities.",
@@ -118,11 +151,49 @@ const fetchMealsByCuisine = async (req, res) => {
     try {
         const cuisine = req.params.cuisine;
         const articles = await Article.find({ "meal.cuisine": cuisine });
+
         if (!articles || articles.length === 0) {
             return res.status(404).json({
                 message: "No meals found for the specified cuisine."
             });
         }
+
+        return res.status(200).json({
+            message: "Meals fetched successfully.",
+            articles
+        });
+
+        const likes = await Account.find({ "likes.type": cuisine});
+        if (!likes) {
+            const createLikes = async (req, res) => {
+                try {
+                    const newLikes = await new Likes("meal", cuisine, 1);
+                    await Likes.save();
+                } catch (error) {
+                    return res.status(500).json({
+                        message: "Unable to create likes.",
+                        error: error.message
+                    });
+                }
+            };
+        } else {
+            try {
+                const updateLikes = async (req, res) => {
+                    const newLikes = {
+                        "category": "meal",
+                        "type": cuisine,
+                        "number": +1
+                    };
+                    const updateLike = await Likes.findOneAndUpdate({type: cuisine, newLikes});
+                }
+            } catch (error) {
+                return res.status(500).json({
+                    message: "Unable to update likes.",
+                    error: error.message
+                });
+            }
+        }
+
     } catch (error) {
         return res.status(500).json({
             message: "Unable to fetch meals.",
@@ -133,22 +204,6 @@ const fetchMealsByCuisine = async (req, res) => {
 
 const addArticle = async (req, res) => {
     try {
-        const account = await Account.findById(
-            req.account.accountId
-        );
-
-        if (!account) {
-            return res.status(404).json({
-                message: "Account not found."
-            });
-        }
-
-        if (!["provider", "admin"].includes(account.accountType)) {
-            return res.status(403).json({
-                message: "Only provider and admin accounts can add articles."
-            });
-        }
-
         const article = await new Article(req.body);
         await article.save();
         return res.status(201).json({
@@ -165,22 +220,6 @@ const addArticle = async (req, res) => {
 
 const updateArticle = async (req, res) => {
     try {
-        const account = await Account.findById(
-            req.account.accountId
-        );
-
-        if (!account) {
-            return res.status(404).json({
-                message: "Account not found."
-            });
-        }
-
-        if (!["provider", "admin"].includes(account.accountType)) {
-            return res.status(403).json({
-                message: "Only provider and admin accounts can update articles."
-            });
-        }
-
         const article = await Article.findByIdAndUpdate(req.params.id, req.body);
         if (!article) {
             return res.status(404).json({
@@ -202,22 +241,6 @@ const updateArticle = async (req, res) => {
 
 const publishArticle = async (req, res) => {
     try {
-        const account = await Account.findById(
-            req.account.accountId
-        );
-
-        if (!account) {
-            return res.status(404).json({
-                message: "Account not found."
-            });
-        }
-
-        if (!["provider", "admin"].includes(account.accountType)) {
-            return res.status(403).json({
-                message: "Only provider and admin accounts can publish articles."
-            });
-        }
-
         const article = await Article.findByIdAndUpdate(req.params.id, { isPublished: true });
         if (!article) {
             return res.status(404).json({
@@ -239,22 +262,6 @@ const publishArticle = async (req, res) => {
 
 const unpublishArticle = async (req, res) => {
     try {
-const account = await Account.findById(
-            req.account.accountId
-        );
-
-        if (!account) {
-            return res.status(404).json({
-                message: "Account not found."
-            });
-        }
-
-        if (account.accountType !== ("provider" || "admin")) {
-            return res.status(403).json({
-                message: "Only provider and admin accounts can unpublish articles."
-            });
-        }
-
         const article = await Article.findByIdAndUpdate(req.params.id, { isPublished: false });
         if (!article) {
             return res.status(404).json({
@@ -266,7 +273,6 @@ const account = await Account.findById(
             message: "Article unpublished successfully.",
             article
         });
-
     } catch (error) {
         return res.status(500).json({
             message: "Unable to unpublish article.",
@@ -277,22 +283,6 @@ const account = await Account.findById(
 
 const deleteArticle = async (req, res) => {
     try {
-const account = await Account.findById(
-            req.account.accountId
-        );
-
-        if (!account) {
-            return res.status(404).json({
-                message: "Account not found."
-            });
-        }
-
-        if (!["provider", "admin"].includes(account.accountType)) {
-            return res.status(403).json({
-                message: "Only provider and admin accounts can delete articles."
-            });
-        }
-
         const article = await Article.findByIdAndDelete(req.params.id);
         if (!article) {
             return res.status(404).json({

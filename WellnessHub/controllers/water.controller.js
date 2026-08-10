@@ -1,5 +1,5 @@
 const Account = require("../models/account.model");
-
+const unitConverter = require("../middleware/unit.middleware");
 
 const allowedUnits = ["ml", "fl. oz", "gal.", "glass", "cup"];
 
@@ -38,11 +38,15 @@ const addWaterRecord = async (req, res) => {
             account.userData = {};
         }
 
-        
+        const amountInMl =
+            unit === "ml"
+                ? amount
+                : unitConverter(unit, amount);
+
         account.userData.waterLog.push({
             date: date || new Date(),
-            amount,
-            unit
+            amount: Number(amountInMl.toFixed(2)),
+            unit: "ml"
         });
 
         await account.save();
@@ -127,8 +131,13 @@ if (!waterRecord) {
            });
 }
 
-        waterRecord.amount = amount;
-        waterRecord.unit = unit;
+        const amountInMl =
+            unit === "ml"
+                ? amount
+                : unitConverter(unit, amount);
+
+        waterRecord.amount = Number(amountInMl.toFixed(2));
+        waterRecord.unit = "ml";
 
         if (date) {
             waterRecord.date = date;
