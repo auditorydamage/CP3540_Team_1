@@ -9,6 +9,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ProviderDashboard from "./pages/ProviderDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import WaterTracker from "./pages/WaterTracker";
 import MoodCheckIn from "./pages/MoodCheckIn";
 import Exercise from "./pages/Exercise";
@@ -26,6 +27,7 @@ function App() {
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/provider-dashboard" element={<ProviderDashboard />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/water" element={<WaterTracker />} />
           <Route path="/mood" element={<MoodCheckIn />} />
           <Route path="/exercise" element={<Exercise />} />

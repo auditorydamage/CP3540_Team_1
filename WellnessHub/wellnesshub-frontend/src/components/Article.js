@@ -104,7 +104,7 @@ function ArticleEditor () {
                         <tbody>
                         <tr>
                             <td><label>Category:</label></td>
-                            <td><select value={content.category} defaultValue="activity" onChange={handleCategoryChange}>
+                            <td><select value={content.category} onChange={handleCategoryChange}>
                                 <option value="meal">Meal</option>
                                 <option value="activity">Activity</option>
                             </select></td>

@@ -6,7 +6,11 @@ const {
     getCurrentAccount,
     registerAccount,
     activateAccount,
-    deleteAccount
+    deleteAccount,
+    getAccounts,
+    getAccountById,
+    modifyAccount,
+    changePassword
 } = require("../controllers/account.controller");
 
 const {
@@ -18,6 +22,10 @@ router.post("/login", loginAccount);
 router.post("/register", registerAccount);
 router.put("/activate", verifyToken, activateAccount);
 router.delete("/delete", verifyToken, deleteAccount);
+router.get("/list", verifyToken, getAccounts);
+router.get("/:id", verifyToken, getAccountById);
+router.put("/:id", verifyToken, modifyAccount);
+router.put("/password", verifyToken, changePassword);
 
 // Protected route for retrieving the logged-in account
 router.get("/me", verifyToken, getCurrentAccount);

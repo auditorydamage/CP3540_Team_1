@@ -3,7 +3,6 @@ import { ArticleEditor } from "../components/Article.js";
 
 function ProviderDashboard() {
   const [articles, setArticles] = useState([]);
-  const [newArticle, setNewArticle] = useState({});
 
   useEffect(() => {
     async function fetchArticles(author) {
@@ -15,7 +14,7 @@ function ProviderDashboard() {
         console.error("Error fetching articles:", error);
       }
     }
-     fetchArticles("markphoenix");
+     fetchArticles(author);
   }, []);
 
   return (
