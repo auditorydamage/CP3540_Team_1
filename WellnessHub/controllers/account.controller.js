@@ -64,27 +64,27 @@ const loginAccount = async (req, res) => {
 
 const registerAccount = async (req, res) => {
     try {
-        const { username, password, accountType, emailAddress } = req.body;
+        const { username, password, emailAddress } = req.body;
+
+        if (!username || !password || !emailAddress) {
+            return res.status(400).json({
+                message: "Username, password, and email address are required."
+            });
+        }
+
         const existingUser = await Account.findOne({ username });
-        const existingEmail = await Account.findOne({ emailAddress });
+
         if (existingUser) {
             return res.status(400).json({
                 message: "Username already exists."
             });
         }
+
+        const existingEmail = await Account.findOne({ emailAddress });
+
         if (existingEmail) {
             return res.status(400).json({
                 message: "Email address already in use."
-            });
-        }
-        if (!username || !password || !accountType || !emailAddress) {
-            return res.status(400).json({
-                message: "All fields are required."
-            });
-        }
-        if (!["user", "provider", "admin"].includes(accountType)) {
-            return res.status(400).json({
-                message: "Invalid account type."
             });
         }
 
@@ -93,7 +93,7 @@ const registerAccount = async (req, res) => {
         const newAccount = new Account({
             username,
             password: hashedPassword,
-            accountType,
+            accountType: "user",
             emailAddress
         });
 
@@ -150,7 +150,9 @@ const activateAccount = async (req, res) => {
 
 const deleteAccount = async (req, res) => {
     try {
-        const account = await Account.deleteOne(req.account.accountId);
+        const account = await Account.findByIdAndDelete(
+            req.account.accountId
+        );
 
         if (!account) {
             return res.status(404).json({
