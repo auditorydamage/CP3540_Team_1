@@ -9,12 +9,36 @@ const {
 } = require("../controllers/sleep.controller");
 
 const {
-    verifyToken
+    verifyToken,
+    authorizeRoles
 } = require("../middleware/auth.middleware");
 
-router.post("/", verifyToken, addSleepRecord);
-router.get("/", verifyToken, getSleepRecords);
-router.put("/:recordId", verifyToken, updateSleepRecord);
-router.delete("/:recordId", verifyToken, deleteSleepRecord);
+router.post(
+    "/",
+    verifyToken,
+    authorizeRoles("user"),
+    addSleepRecord
+);
+
+router.get(
+    "/",
+    verifyToken,
+    authorizeRoles("user"),
+    getSleepRecords
+);
+
+router.put(
+    "/:recordId",
+    verifyToken,
+    authorizeRoles("user"),
+    updateSleepRecord
+);
+
+router.delete(
+    "/:recordId",
+    verifyToken,
+    authorizeRoles("user"),
+    deleteSleepRecord
+);
 
 module.exports = router;

@@ -9,12 +9,36 @@ const {
 } = require("../controllers/weight.controller");
 
 const {
-    verifyToken
+    verifyToken,
+    authorizeRoles
 } = require("../middleware/auth.middleware");
 
-router.post("/", verifyToken, addWeightRecord);
-router.get("/", verifyToken, getWeightRecords);
-router.put("/:recordId", verifyToken, updateWeightRecord);
-router.delete("/:recordId", verifyToken, deleteWeightRecord);
+router.post(
+    "/",
+    verifyToken,
+    authorizeRoles("user"),
+    addWeightRecord
+);
+
+router.get(
+    "/",
+    verifyToken,
+    authorizeRoles("user"),
+    getWeightRecords
+);
+
+router.put(
+    "/:recordId",
+    verifyToken,
+    authorizeRoles("user"),
+    updateWeightRecord
+);
+
+router.delete(
+    "/:recordId",
+    verifyToken,
+    authorizeRoles("user"),
+    deleteWeightRecord
+);
 
 module.exports = router;

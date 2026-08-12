@@ -16,6 +16,7 @@ const MealSubSchema = mongoose.Schema({
 const ArticleSchema = mongoose.Schema({
     author: String,
     title: String,
+    subhead: String,
     category: {
         type: String,
         enum: ["activity", "meal"]
