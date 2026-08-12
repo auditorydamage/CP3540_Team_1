@@ -1,23 +1,23 @@
-import { useState, useEffect } from "react";
-import { ArticleEditor } from "../components/Article.js";
+import { useState, useEffect } from 'react';
 
-function ProviderDashboard() {
-  const [articles, setArticles] = useState([]);
+function ArticleAdmin () {
+    const [articles, setArticles] = useState([]);
+    const [article, setArticle] = useState({articleId: "", author: "", title: "", category: "activity"});
 
-  useEffect(() => {
-    async function fetchArticles(author) {
-      try {
-        const data = await fetch(`http://localhost:3000/api/articles/author/${author}`);
-        const fetchedArticles = await data.json();
-        setArticles(fetchedArticles.articles);
-      } catch (error) {
-        console.error("Error fetching articles:", error);
-      }
-    }
-     fetchArticles("markphoenix");
-  }, []);
+    useEffect(() => {
+        async function fetchArticles() {
+            try {
+                const data = await fetch(`http://localhost:3000/api/articles/`);
+                const fetchedArticles = await data.json();
+                setArticles(fetchedArticles.articles);
+            } catch (error) {
+                console.error("Error fetching users:", error);
+            }
+        }
+        fetchArticles();
+    }, []);
 
-  async function handleEdit (e) {
+    async function handleEdit (e) {
     return e;
   }
 
@@ -39,29 +39,6 @@ function ProviderDashboard() {
   }
 
   return (
-    <div style={{ padding: "30px" }}>
-      <h1>Welcome to WellnessHub!</h1>
-
-      <p>Content Provider Dashboard.</p>
-
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "20px",
-          marginTop: "30px"
-        }}
-      >
-        <div
-          style={{
-            background: "white",
-            padding: "20px",
-            borderRadius: "10px",
-            width: "80%",
-            boxShadow: "0 2px 5px rgba(0,0,0,.15)"
-          }}
-        >
-          <h3>Your articles.</h3>
           <table>
             <thead>
               <tr>
@@ -88,23 +65,8 @@ function ProviderDashboard() {
             )}
             </tbody>
           </table>
-        </div>
 
-        <div
-          style={{
-            background: "white",
-            padding: "20px",
-            borderRadius: "10px",
-            width: "80%",
-            boxShadow: "0 2px 5px rgba(0,0,0,.15)"
-          }}
-        >
-          <h3>Create an Article</h3>
-          <ArticleEditor />
-        </div>
-      </div>
-    </div>
-  );
+  )
 }
 
-export default ProviderDashboard;
+export {ArticleAdmin};

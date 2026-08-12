@@ -34,9 +34,16 @@ function ArticleDisplay ({articleId}) {
     );
 };
 
-function ArticleEditor () {
+function ArticleEditor ({articleId}) {
 
     const [ content, setContent ] = useState({author: "", title: "", category: "", activity: {activityType: "", body: ""}, meal: {name: "", cuisine: "", mealType: "", body: "", ingredients: []}});
+
+    useEffect(() => {
+        if (articleId) {
+            const articleToEdit = fetch(`http://localhost:3000/api/articles/${articleId}`);
+            setContent({...articleToEdit});
+        }
+    },[articleId]);
 
     function handleTitleChange(e) {
         e.preventDefault();

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ArticleEditor } from "../components/Article.js";
 import { AccountAdmin } from "../components/AccountAdmin.js";
+import { ArticleAdmin } from "../components/ArticleAdmin.js";
 
 function AdminDashboard() {
 
@@ -41,7 +42,7 @@ function AdminDashboard() {
           }}
         >
           <h3>Manage articles</h3>
-          { /* call article management component here */ }
+          <ArticleAdmin />
         </div>
       </div>
     </div>
