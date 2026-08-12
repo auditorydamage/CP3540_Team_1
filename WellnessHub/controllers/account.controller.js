@@ -196,10 +196,115 @@ const getCurrentAccount = async (req, res) => {
     }
 };
 
+const getAccounts = async (req, res) => {
+    try {
+        const accounts = await Account.find().select("-password");
+        return res.status(200).json({
+            message: "Accounts retrieved successfully.",
+            accounts
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Unable to retrieve accounts.",
+            error: error.message
+        });
+    }
+};
+
+const getAccountById = async (req, res) => {
+    try {
+        const account = await Account.findById(req.params.id).select("-password");
+
+        if (!account) {
+            return res.status(404).json({
+                message: "Account not found."
+            });
+        }
+
+        return res.status(200).json({
+            message: "Account retrieved successfully.",
+            account
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Unable to retrieve account.",
+            error: error.message
+        });
+    }
+};
+
+const modifyAccount = async (req, res) => {
+    try {
+        const account = await Account.findByIdAndUpdate(req.params.id, req.body).select("-password");
+
+        if (!account) {
+            return res.status(404).json({
+                message: "Account not found."
+            });
+        }
+
+        return res.status(200).json({
+            message: "Account updated successfully.",
+            account
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Unable to update account.",
+            error: error.message
+        });
+    }
+};
+
+const changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({
+                message: "Old and new passwords are required."
+            });
+        }
+
+        const account = await Account.findById(req.account.accountId);
+
+        if (!account) {
+            return res.status(404).json({
+                message: "Account not found."
+            });
+        }
+
+        const passwordMatches = await bcrypt.compare(oldPassword, account.password);
+
+        if (!passwordMatches) {
+            return res.status(401).json({
+                message: "Old password is incorrect."
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        account.password = hashedPassword;
+        await account.save();
+
+        return res.status(200).json({
+            message: "Password changed successfully."
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Unable to change password.",
+            error: error.message
+        });
+    }
+};
+        
+
 module.exports = {
     loginAccount,
     getCurrentAccount,
     registerAccount,
     activateAccount,
-    deleteAccount
+    deleteAccount,
+    getAccounts,
+    getAccountById,
+    modifyAccount,
+    changePassword
 };
