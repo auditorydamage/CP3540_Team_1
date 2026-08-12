@@ -1,128 +1,174 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useWellness } from "../context/WellnessContext";
+import { apiRequest } from "../services/api";
 
-const exerciseOptions = [
+const activityOptions = [
   "Walking",
   "Running",
   "Cycling",
-  "Strength Training",
+  "Weight Training",
   "Yoga",
   "Swimming",
-  "Indoor Exercise",
+  "Sports",
   "Other"
 ];
-
-const intensityOptions = ["Low", "Moderate", "High"];
 
 function Exercise() {
   const {
     exerciseMinutes,
     setExerciseMinutes,
-    exerciseGoal,
-    setExerciseGoal
+    exerciseGoal
   } = useWellness();
 
-  const [formData, setFormData] = useState({
-    exerciseType: "Walking",
-    duration: "",
-    intensity: "Moderate"
-  });
-
   const [activities, setActivities] = useState([]);
+  const [activityType, setActivityType] = useState("Walking");
+  const [customActivity, setCustomActivity] = useState("");
+  const [minutes, setMinutes] = useState("");
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  function handleChange(event) {
-    const { name, value } = event.target;
+  useEffect(() => {
+    loadActivities();
+  }, []);
 
-    setFormData((currentData) => ({
-      ...currentData,
-      [name]: value
-    }));
+  async function loadActivities() {
+    try {
+      setLoading(true);
+      setError("");
+
+      const data = await apiRequest("/activities");
+
+      const records = data.activities || [];
+
+      const sortedRecords = [...records].sort(
+        (a, b) => new Date(b.date) - new Date(a.date)
+      );
+
+      setActivities(sortedRecords);
+
+      const todaysActivities = sortedRecords.filter((record) =>
+        isToday(record.date)
+      );
+
+      const totalMinutes = todaysActivities.reduce(
+        (total, record) =>
+          total + parseActivity(record.activity).minutes,
+        0
+      );
+
+      setExerciseMinutes(totalMinutes);
+    } catch (error) {
+      console.error("Unable to load activities:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+
+    setError("");
     setMessage("");
 
-    const duration = Number(formData.duration);
+    const enteredMinutes = Number(minutes);
 
-    if (!duration || duration <= 0) {
-      setMessage("Please enter a valid exercise duration.");
+    if (!enteredMinutes || enteredMinutes <= 0) {
+      setError("Please enter a valid exercise duration.");
       return;
     }
 
-    const newActivity = {
-      id: Date.now(),
-      exerciseType: formData.exerciseType,
-      duration,
-      intensity: formData.intensity,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit"
-      })
-    };
+    let selectedActivity = activityType;
 
-    setActivities((currentActivities) => [
-      newActivity,
-      ...currentActivities
-    ]);
+    if (activityType === "Other") {
+      selectedActivity = customActivity.trim();
 
-    setExerciseMinutes((currentMinutes) => currentMinutes + duration);
-
-    setFormData((currentData) => ({
-      ...currentData,
-      duration: ""
-    }));
-
-    setMessage("Exercise activity saved successfully.");
-  }
-
-  function handleDelete(activityId) {
-    const activityToRemove = activities.find(
-      (activity) => activity.id === activityId
-    );
-
-    if (activityToRemove) {
-      setExerciseMinutes((currentMinutes) =>
-        Math.max(currentMinutes - activityToRemove.duration, 0)
-      );
+      if (!selectedActivity) {
+        setError("Please enter an activity name.");
+        return;
+      }
     }
 
-    setActivities((currentActivities) =>
-      currentActivities.filter(
-        (activity) => activity.id !== activityId
-      )
-    );
+    const activityString =
+      `${selectedActivity} | ${enteredMinutes} min`;
 
-    setMessage("");
+    try {
+      setSaving(true);
+
+      const data = await apiRequest("/activities", {
+        method: "POST",
+        body: JSON.stringify({
+          activity: activityString,
+          date: new Date().toISOString()
+        })
+      });
+
+      const newActivity = data.activity;
+
+      setActivities((currentActivities) => [
+        newActivity,
+        ...currentActivities
+      ]);
+
+      setExerciseMinutes(
+        (currentMinutes) => currentMinutes + enteredMinutes
+      );
+
+      setMinutes("");
+      setCustomActivity("");
+      setActivityType("Walking");
+
+      setMessage("Exercise saved successfully.");
+    } catch (error) {
+      console.error("Unable to save activity:", error);
+      setError(error.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleClearActivities() {
-    setActivities([]);
-    setExerciseMinutes(0);
-    setMessage("");
+  async function deleteActivity(recordId) {
+    try {
+      setSaving(true);
+      setError("");
+      setMessage("");
+
+      await apiRequest(`/activities/${recordId}`, {
+        method: "DELETE"
+      });
+
+      await loadActivities();
+
+      setMessage("Exercise record removed.");
+    } catch (error) {
+      console.error("Unable to delete activity:", error);
+      setError(error.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
-  const progressPercentage =
-    exerciseGoal > 0
-      ? Math.min((exerciseMinutes / exerciseGoal) * 100, 100)
-      : 0;
+  const progressPercentage = Math.min(
+    (exerciseMinutes / exerciseGoal) * 100,
+    100
+  );
 
-  const goalReached =
-    exerciseGoal > 0 && exerciseMinutes >= exerciseGoal;
+  const goalReached = exerciseMinutes >= exerciseGoal;
 
   return (
     <div style={{ padding: "30px" }}>
-      <h1>🏃 Exercise Tracker</h1>
+      <h1>🏃 Exercise</h1>
 
       <p>
-        Record your exercise and track your progress toward today's activity
-        goal.
+        Track your daily exercise and physical activity.
       </p>
 
       <section
         style={{
-          maxWidth: "800px",
+          maxWidth: "850px",
           marginTop: "30px",
           padding: "30px",
           backgroundColor: "#ffffff",
@@ -130,105 +176,179 @@ function Exercise() {
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)"
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: "20px",
-            flexWrap: "wrap"
-          }}
-        >
-          <div>
+        {loading ? (
+          <p>Loading exercise history...</p>
+        ) : (
+          <>
             <h2 style={{ marginTop: 0 }}>
               Today's Progress
             </h2>
 
             <p
               style={{
-                marginBottom: "5px",
-                fontSize: "26px",
+                fontSize: "24px",
                 fontWeight: "700"
               }}
             >
               {exerciseMinutes} / {exerciseGoal} minutes
             </p>
 
-            <p style={{ color: "#667085" }}>
-              {activities.length}{" "}
-              {activities.length === 1
-                ? "activity"
-                : "activities"}{" "}
-              recorded
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="exerciseGoal">
-              Daily goal in minutes
-            </label>
-
-            <input
-              id="exerciseGoal"
-              type="number"
-              min="1"
-              value={exerciseGoal}
-              onChange={(event) =>
-                setExerciseGoal(Number(event.target.value))
-              }
+            <div
               style={{
-                ...inputStyle,
-                width: "180px"
+                height: "20px",
+                backgroundColor: "#e5e7eb",
+                borderRadius: "10px",
+                overflow: "hidden"
               }}
-            />
-          </div>
-        </div>
+            >
+              <div
+                style={{
+                  width: `${progressPercentage}%`,
+                  height: "100%",
+                  backgroundColor: goalReached
+                    ? "#4f8a3c"
+                    : "#4d83b8",
+                  transition: "width 0.3s ease"
+                }}
+              />
+            </div>
 
-        <div
-          style={{
-            height: "24px",
-            marginTop: "20px",
-            backgroundColor: "#e5e7eb",
-            borderRadius: "12px",
-            overflow: "hidden"
-          }}
-        >
-          <div
-            style={{
-              width: `${progressPercentage}%`,
-              height: "100%",
-              backgroundColor: goalReached
-                ? "#4f8a3c"
-                : "#4d83b8",
-              transition: "width 0.3s ease"
-            }}
-          />
-        </div>
+            <p style={{ color: "#667085" }}>
+              {Math.round(progressPercentage)}% of daily goal
+            </p>
 
-        <p style={{ marginTop: "10px" }}>
-          {Math.round(progressPercentage)}% of daily goal
-        </p>
+            {goalReached && (
+              <p
+                style={{
+                  padding: "12px",
+                  borderRadius: "7px",
+                  backgroundColor: "#e6f4df",
+                  color: "#2f6b2f",
+                  fontWeight: "700"
+                }}
+              >
+                Daily exercise goal reached!
+              </p>
+            )}
 
-        {goalReached && (
-          <p
-            style={{
-              padding: "12px",
-              borderRadius: "7px",
-              backgroundColor: "#e6f4df",
-              color: "#2f6b2f",
-              fontWeight: "700"
-            }}
-          >
-            Daily exercise goal reached!
-          </p>
+            <h2 style={{ marginTop: "35px" }}>
+              Log Exercise
+            </h2>
+
+            <form onSubmit={handleSubmit}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "2fr 1fr",
+                  gap: "15px"
+                }}
+              >
+                <div>
+                  <label htmlFor="activityType">
+                    Activity
+                  </label>
+
+                  <select
+                    id="activityType"
+                    value={activityType}
+                    onChange={(event) =>
+                      setActivityType(event.target.value)
+                    }
+                    style={inputStyle}
+                  >
+                    {activityOptions.map((activity) => (
+                      <option
+                        key={activity}
+                        value={activity}
+                      >
+                        {activity}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="exerciseMinutes">
+                    Duration (minutes)
+                  </label>
+
+                  <input
+                    id="exerciseMinutes"
+                    type="number"
+                    min="1"
+                    value={minutes}
+                    onChange={(event) =>
+                      setMinutes(event.target.value)
+                    }
+                    placeholder="Example: 30"
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
+              {activityType === "Other" && (
+                <div style={{ marginTop: "15px" }}>
+                  <label htmlFor="customActivity">
+                    Activity name
+                  </label>
+
+                  <input
+                    id="customActivity"
+                    type="text"
+                    value={customActivity}
+                    onChange={(event) =>
+                      setCustomActivity(event.target.value)
+                    }
+                    placeholder="Enter activity"
+                    style={inputStyle}
+                  />
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={saving}
+                style={primaryButtonStyle}
+              >
+                {saving ? "Saving..." : "Add Exercise"}
+              </button>
+            </form>
+
+            {error && (
+              <p
+                style={{
+                  marginTop: "20px",
+                  padding: "12px",
+                  backgroundColor: "#fde8df",
+                  color: "#9a3412",
+                  borderRadius: "7px"
+                }}
+              >
+                {error}
+              </p>
+            )}
+
+            {message && (
+              <p
+                style={{
+                  marginTop: "20px",
+                  padding: "12px",
+                  backgroundColor: "#e6f4df",
+                  color: "#2f6b2f",
+                  borderRadius: "7px"
+                }}
+              >
+                {message}
+              </p>
+            )}
+          </>
         )}
       </section>
 
-      <form
-        onSubmit={handleSubmit}
+      <section
         style={{
-          maxWidth: "800px",
-          marginTop: "24px",
+          maxWidth: "850px",
+          marginTop: "25px",
           padding: "30px",
           backgroundColor: "#ffffff",
           borderRadius: "12px",
@@ -236,236 +356,119 @@ function Exercise() {
         }}
       >
         <h2 style={{ marginTop: 0 }}>
-          Log Exercise
+          Exercise History
         </h2>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-            gap: "20px"
-          }}
-        >
-          <div>
-            <label htmlFor="exerciseType">
-              Exercise type
-            </label>
-
-            <select
-              id="exerciseType"
-              name="exerciseType"
-              value={formData.exerciseType}
-              onChange={handleChange}
-              style={inputStyle}
-            >
-              {exerciseOptions.map((exerciseType) => (
-                <option
-                  key={exerciseType}
-                  value={exerciseType}
-                >
-                  {exerciseType}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="duration">
-              Duration in minutes
-            </label>
-
-            <input
-              id="duration"
-              name="duration"
-              type="number"
-              min="1"
-              value={formData.duration}
-              onChange={handleChange}
-              placeholder="Example: 30"
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="intensity">
-              Intensity
-            </label>
-
-            <select
-              id="intensity"
-              name="intensity"
-              value={formData.intensity}
-              onChange={handleChange}
-              style={inputStyle}
-            >
-              {intensityOptions.map((intensity) => (
-                <option
-                  key={intensity}
-                  value={intensity}
-                >
-                  {intensity}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {message && (
-          <p
-            role="alert"
-            style={{
-              marginTop: "20px",
-              padding: "12px",
-              borderRadius: "7px",
-              backgroundColor: message.includes("successfully")
-                ? "#e6f4df"
-                : "#fde8df",
-              color: message.includes("successfully")
-                ? "#2f6b2f"
-                : "#9a3412"
-            }}
-          >
-            {message}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          style={{
-            marginTop: "24px",
-            padding: "12px 22px",
-            border: "none",
-            borderRadius: "7px",
-            backgroundColor: "#2f3542",
-            color: "#ffffff",
-            fontSize: "16px",
-            fontWeight: "700",
-            cursor: "pointer"
-          }}
-        >
-          Save Exercise
-        </button>
-      </form>
-
-      <section
-        style={{
-          maxWidth: "800px",
-          marginTop: "24px",
-          padding: "30px",
-          backgroundColor: "#ffffff",
-          borderRadius: "12px",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)"
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "20px"
-          }}
-        >
-          <h2 style={{ margin: 0 }}>
-            Today's Activities
-          </h2>
-
-          {activities.length > 0 && (
-            <button
-              type="button"
-              onClick={handleClearActivities}
-              style={secondaryButtonStyle}
-            >
-              Clear All
-            </button>
-          )}
-        </div>
-
         {activities.length === 0 ? (
-          <p
-            style={{
-              marginTop: "24px",
-              color: "#667085"
-            }}
-          >
-            No exercise has been recorded yet.
+          <p style={{ color: "#667085" }}>
+            No exercise recorded yet.
           </p>
         ) : (
-          <div style={{ marginTop: "24px" }}>
-            {activities.map((activity) => (
-              <article
-                key={activity.id}
+          activities.slice(0, 10).map((record) => {
+            const activityDetails =
+              parseActivity(record.activity);
+
+            return (
+              <div
+                key={record._id}
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                   gap: "20px",
-                  marginBottom: "14px",
-                  padding: "18px",
-                  border: "1px solid #e1e5ea",
-                  borderRadius: "9px",
-                  backgroundColor: "#f8fafc"
+                  padding: "16px 0",
+                  borderBottom: "1px solid #e5e7eb"
                 }}
               >
                 <div>
-                  <h3 style={{ margin: "0 0 8px" }}>
-                    {getExerciseEmoji(activity.exerciseType)}{" "}
-                    {activity.exerciseType}
-                  </h3>
+                  <strong>
+                    🏃 {activityDetails.name}
+                  </strong>
 
-                  <p style={{ margin: "0 0 5px" }}>
-                    {activity.duration} minutes ·{" "}
-                    {activity.intensity} intensity
-                  </p>
+                  {activityDetails.minutes > 0 && (
+                    <div
+                      style={{
+                        marginTop: "5px",
+                        color: "#465269"
+                      }}
+                    >
+                      {activityDetails.minutes} minutes
+                    </div>
+                  )}
 
-                  <small style={{ color: "#667085" }}>
-                    Recorded at {activity.time}
-                  </small>
+                  <div
+                    style={{
+                      marginTop: "5px",
+                      color: "#667085",
+                      fontSize: "14px"
+                    }}
+                  >
+                    {formatDate(record.date)}
+                  </div>
                 </div>
 
                 <button
                   type="button"
+                  disabled={saving}
                   onClick={() =>
-                    handleDelete(activity.id)
+                    deleteActivity(record._id)
                   }
-                  style={{
-                    padding: "9px 14px",
-                    border: "1px solid #cfd4dc",
-                    borderRadius: "7px",
-                    backgroundColor: "#ffffff",
-                    color: "#9a3412",
-                    cursor: "pointer"
-                  }}
+                  style={deleteButtonStyle}
                 >
                   Remove
                 </button>
-              </article>
-            ))}
-          </div>
+              </div>
+            );
+          })
         )}
       </section>
     </div>
   );
 }
 
-function getExerciseEmoji(exerciseType) {
-  switch (exerciseType) {
-    case "Walking":
-      return "🚶";
-    case "Running":
-      return "🏃";
-    case "Cycling":
-      return "🚴";
-    case "Strength Training":
-      return "🏋️";
-    case "Yoga":
-      return "🧘";
-    case "Swimming":
-      return "🏊";
-    case "Indoor Exercise":
-      return "🤸";
-    default:
-      return "🏅";
+function parseActivity(activity) {
+  const text = String(activity || "");
+
+  const parts = text.split("|");
+
+  const name = parts[0]?.trim() || "Activity";
+
+  if (parts.length < 2) {
+    return {
+      name,
+      minutes: 0
+    };
   }
+
+  const minuteMatch = parts[1].match(/(\d+(?:\.\d+)?)/);
+
+  return {
+    name,
+    minutes: minuteMatch
+      ? Number(minuteMatch[1])
+      : 0
+  };
+}
+
+function isToday(dateValue) {
+  const recordDate = new Date(dateValue);
+  const today = new Date();
+
+  return (
+    recordDate.getFullYear() === today.getFullYear() &&
+    recordDate.getMonth() === today.getMonth() &&
+    recordDate.getDate() === today.getDate()
+  );
+}
+
+function formatDate(dateValue) {
+  return new Date(dateValue).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }
 
 const inputStyle = {
@@ -479,11 +482,24 @@ const inputStyle = {
   boxSizing: "border-box"
 };
 
-const secondaryButtonStyle = {
-  padding: "9px 14px",
-  border: "1px solid #aeb4bd",
+const primaryButtonStyle = {
+  marginTop: "20px",
+  padding: "12px 20px",
+  border: "none",
   borderRadius: "7px",
+  backgroundColor: "#2f3542",
+  color: "#ffffff",
+  fontSize: "15px",
+  fontWeight: "700",
+  cursor: "pointer"
+};
+
+const deleteButtonStyle = {
+  padding: "8px 12px",
+  border: "1px solid #cfd4dc",
+  borderRadius: "6px",
   backgroundColor: "#ffffff",
+  color: "#9a3412",
   cursor: "pointer"
 };
 
