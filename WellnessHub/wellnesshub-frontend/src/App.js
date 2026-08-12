@@ -30,8 +30,17 @@ function App() {
 
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/provider-dashboard" element={<ProviderDashboard />} />
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+
+            <Route
+              path="/provider-dashboard"
+              element={<ProviderDashboard />}
+            />
+
+            <Route
+              path="/admin-dashboard"
+              element={<AdminDashboard />}
+            />
+
             <Route path="/water" element={<WaterTracker />} />
             <Route path="/mood" element={<MoodCheckIn />} />
             <Route path="/exercise" element={<Exercise />} />
@@ -41,8 +50,15 @@ function App() {
             <Route path="/profile" element={<Profile />} />
           </Route>
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route
+            path="/"
+            element={<Navigate to="/login" replace />}
+          />
+
+          <Route
+            path="*"
+            element={<Navigate to="/login" replace />}
+          />
         </Routes>
       </BrowserRouter>
     </WellnessProvider>
