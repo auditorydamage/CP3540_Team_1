@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../styles/Login.css";
 
 function Login() {
@@ -11,6 +11,7 @@ function Login() {
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -21,7 +22,7 @@ function Login() {
     }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setError("");
 
@@ -30,7 +31,62 @@ function Login() {
       return;
     }
 
-    navigate("/dashboard");
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        "http://localhost:3000/api/accounts/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            username: formData.username,
+            password: formData.password
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Unable to log in.");
+        return;
+      }
+
+      // Store the JWT returned by the backend.
+      localStorage.setItem("token", data.token);
+
+      // Store the logged-in account information.
+      localStorage.setItem(
+        "account",
+        JSON.stringify(data.account)
+      );
+
+      // Redirect based on the account type.
+      switch (data.account.accountType) {
+        case "provider":
+          navigate("/provider-dashboard");
+          break;
+
+        case "admin":
+          navigate("/admin-dashboard");
+          break;
+
+        default:
+          navigate("/dashboard");
+          break;
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+
+      setError(
+        "Unable to connect to WellnessHub. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -72,10 +128,13 @@ function Login() {
             </p>
           )}
 
-          <button type="submit">Log In</button>
+          <button type="submit" disabled={loading}>
+            {loading ? "Logging In..." : "Log In"}
+          </button>
 
           <p className="register-message">
-            Don't have an account? Registration coming soon.
+            Don't have an account?{" "}
+            <Link to="/register">Create an account</Link>
           </p>
         </form>
       </section>

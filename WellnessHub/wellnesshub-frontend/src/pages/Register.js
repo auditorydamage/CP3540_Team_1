@@ -1,34 +1,36 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import "../styles/Register.css";
 
 function Register() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    username: "",
+    emailAddress: "",
     password: "",
     confirmPassword: ""
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   function handleChange(event) {
     const { name, value } = event.target;
 
-    setFormData((currentData) => ({
-      ...currentData,
+    setFormData((currentFormData) => ({
+      ...currentFormData,
       [name]: value
     }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setError("");
 
     if (
-      !formData.name.trim() ||
-      !formData.email.trim() ||
+      !formData.username.trim() ||
+      !formData.emailAddress.trim() ||
       !formData.password ||
       !formData.confirmPassword
     ) {
@@ -41,131 +43,117 @@ function Register() {
       return;
     }
 
-    navigate("/login");
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        "http://localhost:3000/api/accounts/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            username: formData.username,
+            password: formData.password,
+            emailAddress: formData.emailAddress
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Unable to create account.");
+        return;
+      }
+
+      navigate("/login");
+    } catch (error) {
+      console.error("Registration error:", error);
+
+      setError(
+        "Unable to connect to WellnessHub. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        background: "#f4f6f9",
-        padding: "20px",
-        boxSizing: "border-box"
-      }}
-    >
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          background: "white",
-          padding: "40px",
-          width: "100%",
-          maxWidth: "400px",
-          borderRadius: "10px",
-          boxShadow: "0 2px 8px rgba(0,0,0,.15)"
-        }}
-      >
-        <h1>Create Account</h1>
+    <main className="register-page">
+      <section className="register-card">
+        <div className="register-brand">
+          <h1>WellnessHub</h1>
+          <p>Your wellness journey starts here.</p>
+        </div>
 
-        <label htmlFor="name">Full Name</label>
-        <input
-          id="name"
-          name="name"
-          type="text"
-          value={formData.name}
-          onChange={handleChange}
-          placeholder="Enter your full name"
-          style={{
-            width: "100%",
-            padding: "10px",
-            margin: "8px 0 15px",
-            boxSizing: "border-box"
-          }}
-        />
+        <form className="register-form" onSubmit={handleSubmit}>
+          <h2>Create Account</h2>
 
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="Enter your email"
-          style={{
-            width: "100%",
-            padding: "10px",
-            margin: "8px 0 15px",
-            boxSizing: "border-box"
-          }}
-        />
+          <label htmlFor="username">Username</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            value={formData.username}
+            onChange={handleChange}
+            autoComplete="username"
+            placeholder="Choose a username"
+          />
 
-        <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="Create a password"
-          style={{
-            width: "100%",
-            padding: "10px",
-            margin: "8px 0 15px",
-            boxSizing: "border-box"
-          }}
-        />
+          <label htmlFor="emailAddress">Email</label>
+          <input
+            id="emailAddress"
+            name="emailAddress"
+            type="email"
+            value={formData.emailAddress}
+            onChange={handleChange}
+            autoComplete="email"
+            placeholder="Enter your email"
+          />
 
-        <label htmlFor="confirmPassword">Confirm Password</label>
-        <input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          placeholder="Re-enter your password"
-          style={{
-            width: "100%",
-            padding: "10px",
-            margin: "8px 0 15px",
-            boxSizing: "border-box"
-          }}
-        />
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            autoComplete="new-password"
+            placeholder="Create a password"
+          />
 
-        {error && (
-          <p
-            style={{
-              background: "#fde8df",
-              color: "#9a3412",
-              padding: "10px",
-              borderRadius: "6px"
-            }}
-          >
-            {error}
+          <label htmlFor="confirmPassword">
+            Confirm Password
+          </label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            autoComplete="new-password"
+            placeholder="Re-enter your password"
+          />
+
+          {error && (
+            <p className="register-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <button type="submit" disabled={loading}>
+            {loading ? "Creating Account..." : "Register"}
+          </button>
+
+          <p className="login-message">
+            Already have an account?{" "}
+            <Link to="/login">Log in</Link>
           </p>
-        )}
-
-        <button
-          type="submit"
-          style={{
-            width: "100%",
-            padding: "12px",
-            background: "#2f3542",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer"
-          }}
-        >
-          Register
-        </button>
-
-        <p style={{ marginTop: "20px" }}>
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
-      </form>
-    </div>
+        </form>
+      </section>
+    </main>
   );
 }
 

@@ -1,6 +1,9 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { logout } from "../services/api";
 
 function Sidebar() {
+  const navigate = useNavigate();
+
   const linkStyle = ({ isActive }) => ({
     display: "block",
     color: "white",
@@ -10,6 +13,11 @@ function Sidebar() {
     marginBottom: "4px",
     backgroundColor: isActive ? "#465269" : "transparent"
   });
+
+  function handleLogout() {
+    logout();
+    navigate("/login");
+  }
 
   return (
     <aside
@@ -58,9 +66,24 @@ function Sidebar() {
 
       <hr />
 
-      <NavLink to="/login" style={linkStyle}>
-  🚪 Logout
-</NavLink>
+      <button
+        type="button"
+        onClick={handleLogout}
+        style={{
+          display: "block",
+          width: "100%",
+          background: "transparent",
+          border: "none",
+          color: "white",
+          padding: "12px 10px",
+          borderRadius: "6px",
+          fontSize: "16px",
+          cursor: "pointer",
+          textAlign: "left"
+        }}
+      >
+        🚪 Logout
+      </button>
     </aside>
   );
 }
