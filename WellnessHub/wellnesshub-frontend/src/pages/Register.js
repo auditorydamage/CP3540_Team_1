@@ -43,6 +43,11 @@ function Register() {
       return;
     }
 
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -54,9 +59,9 @@ function Register() {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            username: formData.username,
+            username: formData.username.trim(),
             password: formData.password,
-            emailAddress: formData.emailAddress,
+            emailAddress: formData.emailAddress.trim(),
             accountType: "user"
           })
         }
@@ -65,7 +70,9 @@ function Register() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Unable to create account.");
+        setError(
+          data.message || "Unable to create account."
+        );
         return;
       }
 
@@ -81,18 +88,31 @@ function Register() {
     }
   }
 
+  const passwordStrength = getPasswordStrength(
+    formData.password
+  );
+
   return (
     <main className="register-page">
       <section className="register-card">
         <div className="register-brand">
           <h1>WellnessHub</h1>
-          <p>Your wellness journey starts here.</p>
+
+          <p>
+            Your wellness journey starts here.
+          </p>
         </div>
 
-        <form className="register-form" onSubmit={handleSubmit}>
+        <form
+          className="register-form"
+          onSubmit={handleSubmit}
+        >
           <h2>Create Account</h2>
 
-          <label htmlFor="username">Username</label>
+          <label htmlFor="username">
+            Username
+          </label>
+
           <input
             id="username"
             name="username"
@@ -103,7 +123,10 @@ function Register() {
             placeholder="Choose a username"
           />
 
-          <label htmlFor="emailAddress">Email</label>
+          <label htmlFor="emailAddress">
+            Email
+          </label>
+
           <input
             id="emailAddress"
             name="emailAddress"
@@ -114,7 +137,10 @@ function Register() {
             placeholder="Enter your email"
           />
 
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">
+            Password
+          </label>
+
           <input
             id="password"
             name="password"
@@ -125,9 +151,26 @@ function Register() {
             placeholder="Create a password"
           />
 
+          {formData.password && (
+            <p
+              style={{
+                marginTop: "8px",
+                marginBottom: "4px",
+                fontSize: "14px",
+                color: passwordStrength.color
+              }}
+            >
+              Password strength:{" "}
+              <strong>
+                {passwordStrength.label}
+              </strong>
+            </p>
+          )}
+
           <label htmlFor="confirmPassword">
             Confirm Password
           </label>
+
           <input
             id="confirmPassword"
             name="confirmPassword"
@@ -139,23 +182,80 @@ function Register() {
           />
 
           {error && (
-            <p className="register-error" role="alert">
+            <p
+              className="register-error"
+              role="alert"
+            >
               {error}
             </p>
           )}
 
-          <button type="submit" disabled={loading}>
-            {loading ? "Creating Account..." : "Register"}
+          <button
+            type="submit"
+            disabled={loading}
+          >
+            {loading
+              ? "Creating Account..."
+              : "Register"}
           </button>
 
           <p className="login-message">
             Already have an account?{" "}
-            <Link to="/login">Log in</Link>
+            <Link to="/login">
+              Log in
+            </Link>
           </p>
         </form>
       </section>
     </main>
   );
+}
+
+function getPasswordStrength(password) {
+  let score = 0;
+
+  if (password.length >= 8) {
+    score += 1;
+  }
+
+  if (password.length >= 12) {
+    score += 1;
+  }
+
+  if (/[a-z]/.test(password)) {
+    score += 1;
+  }
+
+  if (/[A-Z]/.test(password)) {
+    score += 1;
+  }
+
+  if (/[0-9]/.test(password)) {
+    score += 1;
+  }
+
+  if (/[^A-Za-z0-9]/.test(password)) {
+    score += 1;
+  }
+
+  if (score <= 2) {
+    return {
+      label: "Weak",
+      color: "#b42318"
+    };
+  }
+
+  if (score <= 4) {
+    return {
+      label: "Medium",
+      color: "#b54708"
+    };
+  }
+
+  return {
+    label: "Strong",
+    color: "#2f6b2f"
+  };
 }
 
 export default Register;

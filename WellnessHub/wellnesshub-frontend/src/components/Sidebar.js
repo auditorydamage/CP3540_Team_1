@@ -55,6 +55,10 @@ function Sidebar() {
           ❤️ Heart Rate
         </NavLink>
 
+        <NavLink to="/weight" style={linkStyle}>
+          ⚖️ Weight Tracker
+        </NavLink>
+
         <NavLink to="/exercise" style={linkStyle}>
           🏃 Exercise
         </NavLink>

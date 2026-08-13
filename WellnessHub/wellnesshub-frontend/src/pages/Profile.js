@@ -1,30 +1,33 @@
 import { useEffect, useState } from "react";
-import { apiRequest, getStoredAccount } from "../services/api";
+import { apiRequest } from "../services/api";
 
 function Profile() {
-  const [accountId, setAccountId] = useState(null);
+  const [account, setAccount] = useState(null);
 
   const [formData, setFormData] = useState({
     heightUnit: "cm",
     heightCm: "",
     heightFeet: "",
     heightInches: "",
-    weightUnit: "kg",
-    weight: "",
     activityLevel: "",
     wellnessGoal: ""
   });
 
-  const [originalWeight, setOriginalWeight] = useState({
-    weight: "",
-    unit: "kg"
+  const [passwordData, setPasswordData] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: ""
   });
 
-  const [weightHistory, setWeightHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+
+  const [profileMessage, setProfileMessage] = useState("");
+  const [profileError, setProfileError] = useState("");
+
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
     loadProfile();
@@ -33,29 +36,13 @@ function Profile() {
   async function loadProfile() {
     try {
       setLoading(true);
-      setError("");
+      setProfileError("");
 
-      const storedAccount = getStoredAccount();
+      const data = await apiRequest("/accounts/me");
+      const currentAccount = data.account;
+      const userData = currentAccount?.userData || {};
 
-      if (!storedAccount?.id) {
-        throw new Error("Unable to identify the logged-in account.");
-      }
-
-      setAccountId(storedAccount.id);
-
-      const [accountData, weightData] = await Promise.all([
-        apiRequest(`/accounts/${storedAccount.id}`),
-        apiRequest("/weight")
-      ]);
-
-      const userData = accountData.account?.userData || {};
-      const sortedWeights = [...(weightData.weightRecords || [])].sort(
-        (a, b) => new Date(b.date) - new Date(a.date)
-      );
-
-      setWeightHistory(sortedWeights);
-
-      const latestWeight = sortedWeights[0];
+      setAccount(currentAccount);
 
       setFormData((current) => ({
         ...current,
@@ -63,25 +50,14 @@ function Profile() {
           userData.height != null
             ? String(userData.height)
             : "",
-        weight: latestWeight
-          ? String(latestWeight.weight)
-          : "",
-        weightUnit: latestWeight?.unit || "kg",
         activityLevel: userData.activityLevel || "",
         wellnessGoal: Array.isArray(userData.wellnessGoal)
           ? userData.wellnessGoal[0] || ""
           : ""
       }));
-
-      if (latestWeight) {
-        setOriginalWeight({
-          weight: String(latestWeight.weight),
-          unit: latestWeight.unit
-        });
-      }
     } catch (error) {
       console.error("Unable to load profile:", error);
-      setError(error.message);
+      setProfileError(error.message);
     } finally {
       setLoading(false);
     }
@@ -96,16 +72,26 @@ function Profile() {
     }));
   }
 
+  function handlePasswordChange(event) {
+    const { name, value } = event.target;
+
+    setPasswordData((current) => ({
+      ...current,
+      [name]: value
+    }));
+  }
+
   function handleHeightUnitChange(event) {
     const newUnit = event.target.value;
 
     setFormData((current) => {
       if (newUnit === "imperial" && current.heightCm) {
         const totalInches = Number(current.heightCm) / 2.54;
-        const feet = Math.floor(totalInches / 12);
+        let feet = Math.floor(totalInches / 12);
         let inches = Math.round(totalInches - feet * 12);
 
         if (inches === 12) {
+          feet += 1;
           inches = 0;
         }
 
@@ -148,36 +134,37 @@ function Profile() {
     return totalInches * 2.54;
   }
 
-  async function handleSubmit(event) {
+  async function handleProfileSubmit(event) {
     event.preventDefault();
 
-    setMessage("");
-    setError("");
+    setProfileMessage("");
+    setProfileError("");
 
     const heightCm = getHeightInCm();
-    const weight = Number(formData.weight);
 
     if (
       !heightCm ||
       heightCm <= 0 ||
-      !weight ||
-      weight <= 0 ||
       !formData.activityLevel ||
       !formData.wellnessGoal
     ) {
-      setError("Please complete the required profile fields.");
+      setProfileError(
+        "Please complete the required health profile fields."
+      );
       return;
     }
 
-    if (!accountId) {
-      setError("Unable to identify the logged-in account.");
+    if (!account?._id) {
+      setProfileError(
+        "Unable to identify the logged-in account."
+      );
       return;
     }
 
     try {
-      setSaving(true);
+      setSavingProfile(true);
 
-      await apiRequest(`/accounts/${accountId}`, {
+      await apiRequest(`/accounts/${account._id}`, {
         method: "PUT",
         body: JSON.stringify({
           "userData.height": Number(heightCm.toFixed(1)),
@@ -186,46 +173,83 @@ function Profile() {
         })
       });
 
-      const weightChanged =
-        String(formData.weight) !== String(originalWeight.weight) ||
-        formData.weightUnit !== originalWeight.unit;
-
-      if (weightChanged) {
-        const data = await apiRequest("/weight", {
-          method: "POST",
-          body: JSON.stringify({
-            weight,
-            unit: formData.weightUnit,
-            date: new Date().toISOString()
-          })
-        });
-
-        const newWeight = data.weightRecord;
-
-        setWeightHistory((current) => [
-          newWeight,
-          ...current
-        ]);
-
-        setOriginalWeight({
-          weight: String(newWeight.weight),
-          unit: newWeight.unit
-        });
-      }
-
-      setMessage("Health profile saved successfully.");
+      setProfileMessage(
+        "Health profile saved successfully."
+      );
     } catch (error) {
       console.error("Unable to save profile:", error);
-      setError(error.message);
+      setProfileError(error.message);
     } finally {
-      setSaving(false);
+      setSavingProfile(false);
+    }
+  }
+
+  async function handlePasswordSubmit(event) {
+    event.preventDefault();
+
+    setPasswordMessage("");
+    setPasswordError("");
+
+    if (
+      !passwordData.oldPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
+      setPasswordError(
+        "Please complete all password fields."
+      );
+      return;
+    }
+
+    if (
+      passwordData.newPassword !==
+      passwordData.confirmPassword
+    ) {
+      setPasswordError(
+        "New passwords do not match."
+      );
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      setPasswordError(
+        "New password must be at least 8 characters."
+      );
+      return;
+    }
+
+    try {
+      setSavingPassword(true);
+
+      await apiRequest("/accounts/password", {
+        method: "PUT",
+        body: JSON.stringify({
+          oldPassword: passwordData.oldPassword,
+          newPassword: passwordData.newPassword
+        })
+      });
+
+      setPasswordData({
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+
+      setPasswordMessage(
+        "Password changed successfully."
+      );
+    } catch (error) {
+      console.error("Unable to change password:", error);
+      setPasswordError(error.message);
+    } finally {
+      setSavingPassword(false);
     }
   }
 
   if (loading) {
     return (
       <div style={pageStyle}>
-        <h1>👤 Health Profile</h1>
+        <h1>👤 Profile</h1>
         <p>Loading profile...</p>
       </div>
     );
@@ -233,10 +257,49 @@ function Profile() {
 
   return (
     <div style={pageStyle}>
-      <h1>👤 Health Profile</h1>
-      <p>Enter and manage your personal health information.</p>
+      <h1>👤 Profile</h1>
 
-      <form onSubmit={handleSubmit} style={cardStyle}>
+      <p>
+        View your account information and manage your
+        health profile.
+      </p>
+
+      <section style={cardStyle}>
+        <h2 style={{ marginTop: 0 }}>
+          Account Information
+        </h2>
+
+        <div style={accountGridStyle}>
+          <AccountField
+            label="Username"
+            value={account?.username || "Not available"}
+          />
+
+          <AccountField
+            label="Email"
+            value={account?.emailAddress || "Not available"}
+          />
+
+          <AccountField
+            label="Account Type"
+            value={formatAccountType(account?.accountType)}
+          />
+
+          <AccountField
+            label="Status"
+            value={account?.isActive ? "Active" : "Inactive"}
+          />
+        </div>
+      </section>
+
+      <form
+        onSubmit={handleProfileSubmit}
+        style={cardStyle}
+      >
+        <h2 style={{ marginTop: 0 }}>
+          Health Profile
+        </h2>
+
         <div style={gridStyle}>
           <Field label="Height unit *">
             <select
@@ -245,8 +308,13 @@ function Profile() {
               onChange={handleHeightUnitChange}
               style={inputStyle}
             >
-              <option value="cm">Centimetres</option>
-              <option value="imperial">Feet and inches</option>
+              <option value="cm">
+                Centimetres
+              </option>
+
+              <option value="imperial">
+                Feet and inches
+              </option>
             </select>
           </Field>
 
@@ -294,41 +362,6 @@ function Profile() {
             )}
           </Field>
 
-          <Field label="Weight unit *">
-            <select
-              name="weightUnit"
-              value={formData.weightUnit}
-              onChange={handleChange}
-              style={inputStyle}
-            >
-              <option value="kg">Kilograms</option>
-              <option value="lb">Pounds</option>
-            </select>
-          </Field>
-
-          <Field
-            label={`Weight in ${
-              formData.weightUnit === "kg"
-                ? "kilograms"
-                : "pounds"
-            } *`}
-          >
-            <input
-              name="weight"
-              type="number"
-              min="1"
-              step="0.1"
-              value={formData.weight}
-              onChange={handleChange}
-              placeholder={
-                formData.weightUnit === "kg"
-                  ? "Example: 105"
-                  : "Example: 230"
-              }
-              style={inputStyle}
-            />
-          </Field>
-
           <Field label="Activity level *">
             <select
               name="activityLevel"
@@ -336,12 +369,29 @@ function Profile() {
               onChange={handleChange}
               style={inputStyle}
             >
-              <option value="">Select activity level</option>
-              <option value="sedentary">Sedentary</option>
-              <option value="lightly active">Lightly active</option>
-              <option value="moderately active">Moderately active</option>
-              <option value="very active">Very active</option>
-              <option value="extra active">Extra active</option>
+              <option value="">
+                Select activity level
+              </option>
+
+              <option value="sedentary">
+                Sedentary
+              </option>
+
+              <option value="lightly active">
+                Lightly active
+              </option>
+
+              <option value="moderately active">
+                Moderately active
+              </option>
+
+              <option value="very active">
+                Very active
+              </option>
+
+              <option value="extra active">
+                Extra active
+              </option>
             </select>
           </Field>
         </div>
@@ -353,68 +403,238 @@ function Profile() {
             onChange={handleChange}
             style={inputStyle}
           >
-            <option value="">Select a goal</option>
-            <option value="lose weight">Lose weight</option>
-            <option value="maintain weight">Maintain weight</option>
-            <option value="gain muscle">Gain muscle</option>
-            <option value="improve fitness">Improve fitness</option>
-            <option value="reduce stress">Reduce stress</option>
-            <option value="general wellness">General wellness</option>
+            <option value="">
+              Select a goal
+            </option>
+
+            <option value="lose weight">
+              Lose weight
+            </option>
+
+            <option value="maintain weight">
+              Maintain weight
+            </option>
+
+            <option value="gain muscle">
+              Gain muscle
+            </option>
+
+            <option value="improve fitness">
+              Improve fitness
+            </option>
+
+            <option value="reduce stress">
+              Reduce stress
+            </option>
+
+            <option value="general wellness">
+              General wellness
+            </option>
           </select>
         </Field>
 
-        {error && <p style={errorStyle}>{error}</p>}
-        {message && <p style={successStyle}>{message}</p>}
+        {profileError && (
+          <p style={errorStyle}>
+            {profileError}
+          </p>
+        )}
+
+        {profileMessage && (
+          <p style={successStyle}>
+            {profileMessage}
+          </p>
+        )}
 
         <button
           type="submit"
-          disabled={saving}
+          disabled={savingProfile}
           style={primaryButtonStyle}
         >
-          {saving ? "Saving..." : "Save Profile"}
+          {savingProfile
+            ? "Saving..."
+            : "Save Profile"}
         </button>
       </form>
 
-      <section style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>Weight History</h2>
+      <form
+        onSubmit={handlePasswordSubmit}
+        style={cardStyle}
+      >
+        <h2 style={{ marginTop: 0 }}>
+          Security
+        </h2>
 
-        {weightHistory.length === 0 ? (
-          <p style={{ color: "#667085" }}>
-            No weight records yet.
+        <p style={{ color: "#667085" }}>
+          Change the password used to sign in to your
+          WellnessHub account.
+        </p>
+
+        <Field label="Current password">
+          <input
+            name="oldPassword"
+            type="password"
+            value={passwordData.oldPassword}
+            onChange={handlePasswordChange}
+            autoComplete="current-password"
+            style={inputStyle}
+          />
+        </Field>
+
+        <Field label="New password" topMargin>
+          <input
+            name="newPassword"
+            type="password"
+            value={passwordData.newPassword}
+            onChange={handlePasswordChange}
+            autoComplete="new-password"
+            style={inputStyle}
+          />
+
+          {passwordData.newPassword && (
+            <PasswordStrength
+              password={passwordData.newPassword}
+            />
+          )}
+        </Field>
+
+        <Field label="Confirm new password" topMargin>
+          <input
+            name="confirmPassword"
+            type="password"
+            value={passwordData.confirmPassword}
+            onChange={handlePasswordChange}
+            autoComplete="new-password"
+            style={inputStyle}
+          />
+        </Field>
+
+        {passwordError && (
+          <p style={errorStyle}>
+            {passwordError}
           </p>
-        ) : (
-          weightHistory.slice(0, 5).map((record) => (
-            <div key={record._id} style={historyRowStyle}>
-              <strong>
-                {record.weight} {record.unit}
-              </strong>
-
-              <span style={{ color: "#667085" }}>
-                {formatDate(record.date)}
-              </span>
-            </div>
-          ))
         )}
-      </section>
+
+        {passwordMessage && (
+          <p style={successStyle}>
+            {passwordMessage}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={savingPassword}
+          style={primaryButtonStyle}
+        >
+          {savingPassword
+            ? "Changing Password..."
+            : "Change Password"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function AccountField({ label, value }) {
+  return (
+    <div style={accountFieldStyle}>
+      <span style={accountLabelStyle}>
+        {label}
+      </span>
+
+      <strong>{value}</strong>
     </div>
   );
 }
 
 function Field({ label, children, topMargin = false }) {
   return (
-    <div style={topMargin ? { marginTop: "20px" } : undefined}>
+    <div
+      style={
+        topMargin
+          ? { marginTop: "20px" }
+          : undefined
+      }
+    >
       <label>{label}</label>
       {children}
     </div>
   );
 }
 
-function formatDate(dateValue) {
-  return new Date(dateValue).toLocaleDateString([], {
-    month: "short",
-    day: "numeric",
-    year: "numeric"
-  });
+function PasswordStrength({ password }) {
+  const strength = getPasswordStrength(password);
+
+  return (
+    <p
+      style={{
+        marginTop: "8px",
+        marginBottom: 0,
+        fontSize: "14px",
+        color: strength.color
+      }}
+    >
+      Password strength:{" "}
+      <strong>{strength.label}</strong>
+    </p>
+  );
+}
+
+function getPasswordStrength(password) {
+  let score = 0;
+
+  if (password.length >= 8) {
+    score += 1;
+  }
+
+  if (password.length >= 12) {
+    score += 1;
+  }
+
+  if (/[a-z]/.test(password)) {
+    score += 1;
+  }
+
+  if (/[A-Z]/.test(password)) {
+    score += 1;
+  }
+
+  if (/[0-9]/.test(password)) {
+    score += 1;
+  }
+
+  if (/[^A-Za-z0-9]/.test(password)) {
+    score += 1;
+  }
+
+  if (score <= 2) {
+    return {
+      label: "Weak",
+      color: "#b42318"
+    };
+  }
+
+  if (score <= 4) {
+    return {
+      label: "Medium",
+      color: "#b54708"
+    };
+  }
+
+  return {
+    label: "Strong",
+    color: "#2f6b2f"
+  };
+}
+
+function formatAccountType(accountType) {
+  if (!accountType) {
+    return "Not available";
+  }
+
+  return (
+    accountType.charAt(0).toUpperCase() +
+    accountType.slice(1)
+  );
 }
 
 const pageStyle = {
@@ -430,9 +650,30 @@ const cardStyle = {
   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)"
 };
 
+const accountGridStyle = {
+  display: "grid",
+  gridTemplateColumns:
+    "repeat(2, minmax(0, 1fr))",
+  gap: "15px"
+};
+
+const accountFieldStyle = {
+  padding: "15px",
+  backgroundColor: "#f5f7fa",
+  borderRadius: "8px"
+};
+
+const accountLabelStyle = {
+  display: "block",
+  marginBottom: "5px",
+  color: "#667085",
+  fontSize: "13px"
+};
+
 const gridStyle = {
   display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gridTemplateColumns:
+    "repeat(2, minmax(0, 1fr))",
   gap: "20px"
 };
 
@@ -451,13 +692,6 @@ const inputStyle = {
   borderRadius: "7px",
   fontSize: "15px",
   boxSizing: "border-box"
-};
-
-const historyRowStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  padding: "12px 0",
-  borderBottom: "1px solid #e5e7eb"
 };
 
 const primaryButtonStyle = {

@@ -20,6 +20,7 @@ import Articles from "./pages/Articles";
 import ArticleDetails from "./pages/ArticleDetails";
 import SleepTracker from "./pages/SleepTracker";
 import HeartRateTracker from "./pages/HeartRateTracker";
+import WeightTracker from "./pages/WeightTracker";
 import { WellnessProvider } from "./context/WellnessContext";
 
 function App() {
@@ -50,6 +51,7 @@ function App() {
             <Route path="/articles" element={<Articles />} />
             <Route path="/articles/:id" element={<ArticleDetails />} />
             <Route path="/sleep" element={<SleepTracker />} />
+            <Route path="/weight" element={<WeightTracker />} />
             <Route path="/heartrate" element={<HeartRateTracker />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
