@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { apiRequest, getStoredAccount } from "../services/api";
 
 function Profile() {
+  const [accountId, setAccountId] = useState(null);
+
   const [formData, setFormData] = useState({
     heightUnit: "cm",
     heightCm: "",
@@ -12,143 +15,287 @@ function Profile() {
     wellnessGoal: ""
   });
 
+  const [originalWeight, setOriginalWeight] = useState({
+    weight: "",
+    unit: "kg"
+  });
+
+  const [weightHistory, setWeightHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  async function loadProfile() {
+    try {
+      setLoading(true);
+      setError("");
+
+      const storedAccount = getStoredAccount();
+
+      if (!storedAccount?.id) {
+        throw new Error("Unable to identify the logged-in account.");
+      }
+
+      setAccountId(storedAccount.id);
+
+      const [accountData, weightData] = await Promise.all([
+        apiRequest(`/accounts/${storedAccount.id}`),
+        apiRequest("/weight")
+      ]);
+
+      const userData = accountData.account?.userData || {};
+      const sortedWeights = [...(weightData.weightRecords || [])].sort(
+        (a, b) => new Date(b.date) - new Date(a.date)
+      );
+
+      setWeightHistory(sortedWeights);
+
+      const latestWeight = sortedWeights[0];
+
+      setFormData((current) => ({
+        ...current,
+        heightCm:
+          userData.height != null
+            ? String(userData.height)
+            : "",
+        weight: latestWeight
+          ? String(latestWeight.weight)
+          : "",
+        weightUnit: latestWeight?.unit || "kg",
+        activityLevel: userData.activityLevel || "",
+        wellnessGoal: Array.isArray(userData.wellnessGoal)
+          ? userData.wellnessGoal[0] || ""
+          : ""
+      }));
+
+      if (latestWeight) {
+        setOriginalWeight({
+          weight: String(latestWeight.weight),
+          unit: latestWeight.unit
+        });
+      }
+    } catch (error) {
+      console.error("Unable to load profile:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   function handleChange(event) {
     const { name, value } = event.target;
 
-    setFormData((currentData) => ({
-      ...currentData,
+    setFormData((current) => ({
+      ...current,
       [name]: value
     }));
   }
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    setMessage("");
+  function handleHeightUnitChange(event) {
+    const newUnit = event.target.value;
 
-    const heightCompleted =
-      formData.heightUnit === "cm"
-        ? Boolean(formData.heightCm)
-        : Boolean(formData.heightFeet);
+    setFormData((current) => {
+      if (newUnit === "imperial" && current.heightCm) {
+        const totalInches = Number(current.heightCm) / 2.54;
+        const feet = Math.floor(totalInches / 12);
+        let inches = Math.round(totalInches - feet * 12);
+
+        if (inches === 12) {
+          inches = 0;
+        }
+
+        return {
+          ...current,
+          heightUnit: "imperial",
+          heightFeet: String(feet),
+          heightInches: String(inches)
+        };
+      }
+
+      if (newUnit === "cm" && current.heightFeet) {
+        const totalInches =
+          Number(current.heightFeet) * 12 +
+          Number(current.heightInches || 0);
+
+        return {
+          ...current,
+          heightUnit: "cm",
+          heightCm: (totalInches * 2.54).toFixed(1)
+        };
+      }
+
+      return {
+        ...current,
+        heightUnit: newUnit
+      };
+    });
+  }
+
+  function getHeightInCm() {
+    if (formData.heightUnit === "cm") {
+      return Number(formData.heightCm);
+    }
+
+    const totalInches =
+      Number(formData.heightFeet) * 12 +
+      Number(formData.heightInches || 0);
+
+    return totalInches * 2.54;
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    setMessage("");
+    setError("");
+
+    const heightCm = getHeightInCm();
+    const weight = Number(formData.weight);
 
     if (
-      !heightCompleted ||
-      !formData.weight ||
+      !heightCm ||
+      heightCm <= 0 ||
+      !weight ||
+      weight <= 0 ||
       !formData.activityLevel ||
       !formData.wellnessGoal
     ) {
-      setMessage("Please complete the required profile fields.");
+      setError("Please complete the required profile fields.");
       return;
     }
 
-    setMessage("Health profile saved successfully.");
+    if (!accountId) {
+      setError("Unable to identify the logged-in account.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      await apiRequest(`/accounts/${accountId}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          "userData.height": Number(heightCm.toFixed(1)),
+          "userData.activityLevel": formData.activityLevel,
+          "userData.wellnessGoal": [formData.wellnessGoal]
+        })
+      });
+
+      const weightChanged =
+        String(formData.weight) !== String(originalWeight.weight) ||
+        formData.weightUnit !== originalWeight.unit;
+
+      if (weightChanged) {
+        const data = await apiRequest("/weight", {
+          method: "POST",
+          body: JSON.stringify({
+            weight,
+            unit: formData.weightUnit,
+            date: new Date().toISOString()
+          })
+        });
+
+        const newWeight = data.weightRecord;
+
+        setWeightHistory((current) => [
+          newWeight,
+          ...current
+        ]);
+
+        setOriginalWeight({
+          weight: String(newWeight.weight),
+          unit: newWeight.unit
+        });
+      }
+
+      setMessage("Health profile saved successfully.");
+    } catch (error) {
+      console.error("Unable to save profile:", error);
+      setError(error.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div style={pageStyle}>
+        <h1>👤 Health Profile</h1>
+        <p>Loading profile...</p>
+      </div>
+    );
   }
 
   return (
-    <div style={{ padding: "30px" }}>
+    <div style={pageStyle}>
       <h1>👤 Health Profile</h1>
+      <p>Enter and manage your personal health information.</p>
 
-      <p>
-        Enter your health information so WellnessHub can personalize your
-        dashboard and recommendations.
-      </p>
-
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          maxWidth: "700px",
-          marginTop: "30px",
-          padding: "30px",
-          backgroundColor: "#ffffff",
-          borderRadius: "12px",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)"
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-            gap: "20px"
-          }}
-        >
-          <div>
-            <label htmlFor="heightUnit">Height unit *</label>
-
+      <form onSubmit={handleSubmit} style={cardStyle}>
+        <div style={gridStyle}>
+          <Field label="Height unit *">
             <select
-              id="heightUnit"
               name="heightUnit"
               value={formData.heightUnit}
-              onChange={handleChange}
+              onChange={handleHeightUnitChange}
               style={inputStyle}
             >
               <option value="cm">Centimetres</option>
               <option value="imperial">Feet and inches</option>
             </select>
-          </div>
+          </Field>
 
-          <div>
+          <Field
+            label={
+              formData.heightUnit === "cm"
+                ? "Height in centimetres *"
+                : "Height in feet and inches *"
+            }
+          >
             {formData.heightUnit === "cm" ? (
-              <>
-                <label htmlFor="heightCm">Height in centimetres *</label>
-
+              <input
+                name="heightCm"
+                type="number"
+                min="1"
+                step="0.1"
+                value={formData.heightCm}
+                onChange={handleChange}
+                placeholder="Example: 188"
+                style={inputStyle}
+              />
+            ) : (
+              <div style={twoColumnStyle}>
                 <input
-                  id="heightCm"
-                  name="heightCm"
+                  name="heightFeet"
                   type="number"
                   min="1"
-                  step="0.1"
-                  value={formData.heightCm}
+                  value={formData.heightFeet}
                   onChange={handleChange}
-                  placeholder="Example: 188"
+                  placeholder="Feet"
                   style={inputStyle}
                 />
-              </>
-            ) : (
-              <>
-                <label>Height in feet and inches *</label>
 
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "10px"
-                  }}
-                >
-                  <input
-                    id="heightFeet"
-                    name="heightFeet"
-                    type="number"
-                    min="1"
-                    value={formData.heightFeet}
-                    onChange={handleChange}
-                    placeholder="Feet"
-                    aria-label="Height in feet"
-                    style={inputStyle}
-                  />
-
-                  <input
-                    id="heightInches"
-                    name="heightInches"
-                    type="number"
-                    min="0"
-                    max="11"
-                    value={formData.heightInches}
-                    onChange={handleChange}
-                    placeholder="Inches"
-                    aria-label="Additional height in inches"
-                    style={inputStyle}
-                  />
-                </div>
-              </>
+                <input
+                  name="heightInches"
+                  type="number"
+                  min="0"
+                  max="11"
+                  value={formData.heightInches}
+                  onChange={handleChange}
+                  placeholder="Inches"
+                  style={inputStyle}
+                />
+              </div>
             )}
-          </div>
+          </Field>
 
-          <div>
-            <label htmlFor="weightUnit">Weight unit *</label>
-
+          <Field label="Weight unit *">
             <select
-              id="weightUnit"
               name="weightUnit"
               value={formData.weightUnit}
               onChange={handleChange}
@@ -157,15 +304,16 @@ function Profile() {
               <option value="kg">Kilograms</option>
               <option value="lb">Pounds</option>
             </select>
-          </div>
+          </Field>
 
-          <div>
-            <label htmlFor="weight">
-              Weight in {formData.weightUnit === "kg" ? "kilograms" : "pounds"} *
-            </label>
-
+          <Field
+            label={`Weight in ${
+              formData.weightUnit === "kg"
+                ? "kilograms"
+                : "pounds"
+            } *`}
+          >
             <input
-              id="weight"
               name="weight"
               type="number"
               min="1"
@@ -179,13 +327,10 @@ function Profile() {
               }
               style={inputStyle}
             />
-          </div>
+          </Field>
 
-          <div>
-            <label htmlFor="activityLevel">Activity level *</label>
-
+          <Field label="Activity level *">
             <select
-              id="activityLevel"
               name="activityLevel"
               value={formData.activityLevel}
               onChange={handleChange}
@@ -193,71 +338,109 @@ function Profile() {
             >
               <option value="">Select activity level</option>
               <option value="sedentary">Sedentary</option>
-              <option value="light">Lightly active</option>
-              <option value="moderate">Moderately active</option>
-              <option value="very-active">Very active</option>
+              <option value="lightly active">Lightly active</option>
+              <option value="moderately active">Moderately active</option>
+              <option value="very active">Very active</option>
+              <option value="extra active">Extra active</option>
             </select>
-          </div>
+          </Field>
         </div>
 
-        <div style={{ marginTop: "20px" }}>
-          <label htmlFor="wellnessGoal">Primary wellness goal *</label>
-
+        <Field label="Primary wellness goal *" topMargin>
           <select
-            id="wellnessGoal"
             name="wellnessGoal"
             value={formData.wellnessGoal}
             onChange={handleChange}
             style={inputStyle}
           >
             <option value="">Select a goal</option>
-            <option value="lose-weight">Lose weight</option>
-            <option value="maintain-weight">Maintain weight</option>
-            <option value="gain-muscle">Gain muscle</option>
-            <option value="improve-fitness">Improve fitness</option>
-            <option value="reduce-stress">Reduce stress</option>
-            <option value="general-wellness">General wellness</option>
+            <option value="lose weight">Lose weight</option>
+            <option value="maintain weight">Maintain weight</option>
+            <option value="gain muscle">Gain muscle</option>
+            <option value="improve fitness">Improve fitness</option>
+            <option value="reduce stress">Reduce stress</option>
+            <option value="general wellness">General wellness</option>
           </select>
-        </div>
+        </Field>
 
-        {message && (
-          <p
-            style={{
-              marginTop: "20px",
-              padding: "12px",
-              borderRadius: "6px",
-              backgroundColor: message.includes("successfully")
-                ? "#e6f4df"
-                : "#fde8df",
-              color: message.includes("successfully")
-                ? "#2f6b2f"
-                : "#9a3412"
-            }}
-          >
-            {message}
-          </p>
-        )}
+        {error && <p style={errorStyle}>{error}</p>}
+        {message && <p style={successStyle}>{message}</p>}
 
         <button
           type="submit"
-          style={{
-            marginTop: "24px",
-            padding: "12px 22px",
-            border: "none",
-            borderRadius: "7px",
-            backgroundColor: "#2f3542",
-            color: "#ffffff",
-            fontSize: "16px",
-            fontWeight: "700",
-            cursor: "pointer"
-          }}
+          disabled={saving}
+          style={primaryButtonStyle}
         >
-          Save Profile
+          {saving ? "Saving..." : "Save Profile"}
         </button>
       </form>
+
+      <section style={cardStyle}>
+        <h2 style={{ marginTop: 0 }}>Weight History</h2>
+
+        {weightHistory.length === 0 ? (
+          <p style={{ color: "#667085" }}>
+            No weight records yet.
+          </p>
+        ) : (
+          weightHistory.slice(0, 5).map((record) => (
+            <div key={record._id} style={historyRowStyle}>
+              <strong>
+                {record.weight} {record.unit}
+              </strong>
+
+              <span style={{ color: "#667085" }}>
+                {formatDate(record.date)}
+              </span>
+            </div>
+          ))
+        )}
+      </section>
     </div>
   );
 }
+
+function Field({ label, children, topMargin = false }) {
+  return (
+    <div style={topMargin ? { marginTop: "20px" } : undefined}>
+      <label>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function formatDate(dateValue) {
+  return new Date(dateValue).toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
+}
+
+const pageStyle = {
+  padding: "30px"
+};
+
+const cardStyle = {
+  maxWidth: "700px",
+  marginTop: "30px",
+  padding: "30px",
+  backgroundColor: "#ffffff",
+  borderRadius: "12px",
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)"
+};
+
+const gridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: "20px"
+};
+
+const twoColumnStyle = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: "10px"
+};
 
 const inputStyle = {
   display: "block",
@@ -268,6 +451,41 @@ const inputStyle = {
   borderRadius: "7px",
   fontSize: "15px",
   boxSizing: "border-box"
+};
+
+const historyRowStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "12px 0",
+  borderBottom: "1px solid #e5e7eb"
+};
+
+const primaryButtonStyle = {
+  marginTop: "24px",
+  padding: "12px 22px",
+  border: "none",
+  borderRadius: "7px",
+  backgroundColor: "#2f3542",
+  color: "#ffffff",
+  fontSize: "16px",
+  fontWeight: "700",
+  cursor: "pointer"
+};
+
+const errorStyle = {
+  marginTop: "20px",
+  padding: "12px",
+  borderRadius: "6px",
+  backgroundColor: "#fde8df",
+  color: "#9a3412"
+};
+
+const successStyle = {
+  marginTop: "20px",
+  padding: "12px",
+  borderRadius: "6px",
+  backgroundColor: "#e6f4df",
+  color: "#2f6b2f"
 };
 
 export default Profile;
