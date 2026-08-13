@@ -47,6 +47,14 @@ function Sidebar() {
           😊 Mood Check-In
         </NavLink>
 
+        <NavLink to="/sleep" style={linkStyle}>
+          😴 Sleep Tracker
+        </NavLink>
+
+        <NavLink to="/heartrate" style={linkStyle}>
+          ❤️ Heart Rate
+        </NavLink>
+
         <NavLink to="/exercise" style={linkStyle}>
           🏃 Exercise
         </NavLink>
