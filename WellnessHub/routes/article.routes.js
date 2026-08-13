@@ -16,6 +16,11 @@ const {
 } = require("../controllers/article.controller");
 
 const {
+    likesByActivity,
+    likesByCuisine
+} = require("../controllers/likes.controller");
+
+const {
     verifyToken,
     authorizeRoles
 } = require("../middleware/auth.middleware");
@@ -24,8 +29,8 @@ const {
 articleRouter.get("/", verifyToken, fetchAllArticles);
 articleRouter.get("/author/:author", verifyToken, fetchArticlesByAuthor);
 articleRouter.get("/category/:category", verifyToken, fetchArticlesByCategory);
-articleRouter.get("/activity/:activityType", verifyToken, fetchActivitiesByType);
-articleRouter.get("/meal/:cuisine", verifyToken, fetchMealsByCuisine);
+articleRouter.get("/activity/:activityType", verifyToken, fetchActivitiesByType, likesByActivity);
+articleRouter.get("/meal/:cuisine", verifyToken, fetchMealsByCuisine, likesByCuisine);
 articleRouter.get("/:id", verifyToken, fetchArticle);
 
 // Only providers and admins can manage articles

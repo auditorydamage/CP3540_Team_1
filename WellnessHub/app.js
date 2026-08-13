@@ -21,6 +21,7 @@ const sleepRoutes = require("./routes/sleep.routes");
 const weightRoutes = require("./routes/weight.routes");
 const mealPlanRoutes = require("./routes/mealplan.routes");
 const activityRoutes = require("./routes/activity.routes");
+const likesRoutes = require("./routes/likes.routes");
 
 app.use("/api/mood", moodRoutes);
 app.use("/api/walking", walkingRoutes);
@@ -32,6 +33,7 @@ app.use("/api/accounts", accountRoutes);
 app.use("/api/water", waterRoutes);
 app.use("/api/weight", weightRoutes);
 app.use("/api/mealplans", mealPlanRoutes);
+app.use("/api/likes", likesRoutes);
 
 
 // test GET

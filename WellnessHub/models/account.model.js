@@ -56,6 +56,12 @@ const MealPlanSchema = mongoose.Schema({
     meal: String
 })
 
+const LikesSchema = mongoose.Schema({
+    category: String,
+    type: String,
+    likes: Number
+})
+
 const UserDataSchema = mongoose.Schema({
     userPic: String,
     height: Number,
@@ -71,7 +77,8 @@ const UserDataSchema = mongoose.Schema({
     activityLog: [ActivityLogSchema],
     walkingLog: [WalkingLogSchema],
     sleepLog: [SleepLogSchema],
-    mealPlans: [MealPlanSchema]
+    mealPlans: [MealPlanSchema],
+    likes: [LikesSchema]
 });
 
 const ProviderDataSchema = mongoose.Schema({
