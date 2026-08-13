@@ -1,14 +1,15 @@
 import Markdown from 'react-markdown';
 import { useState, useEffect } from 'react';
+import { apiRequest, getStoredAccount } from '../services/api.js';
 
 function ArticleDisplay ({articleId}) {
 
-    const [ content, setContent ] = useState({articleId: "", author: "", title: "", category: "activity"});
+    const [ content, setContent ] = useState({_id: "", author: "", title: "", category: "", subhead: ""});
     
     useEffect(() => {
         async function fetchContent() {
             try {
-                const data = await fetch(`http://localhost:3000/api/articles/${articleId}`);
+                const data = await apiRequest(`/articles/${articleId}`);
                 const fetchedArticle = await data.json();
                 setContent(fetchedArticle.article);
             } catch (error) {
@@ -36,12 +37,17 @@ function ArticleDisplay ({articleId}) {
 
 function ArticleEditor ({articleId}) {
 
-    const [ content, setContent ] = useState({author: "", title: "", category: "", activity: {activityType: "", body: ""}, meal: {name: "", cuisine: "", mealType: "", body: "", ingredients: []}});
+    const [ content, setContent ] = useState({author: "", title: "", category: "", activity: {activityType: "", body: ""}, meal: {cuisine: "", mealType: "", body: ""}});
+    
 
     useEffect(() => {
         if (articleId) {
-            const articleToEdit = fetch(`http://localhost:3000/api/articles/${articleId}`);
-            setContent({...articleToEdit});
+            console.log("Article ID passed: ", articleId);
+            loadContentForEdit(articleId);
+        } else {
+            console.log("No article ID passed, blank entry.");
+            const account = getStoredAccount();
+            setContent({...content, author: account.username, category: "activity"});
         }
     },[articleId]);
 
@@ -84,22 +90,57 @@ function ArticleEditor ({articleId}) {
         setContent({...content, meal: {...content.meal, cuisine: e.target.value}});
     }
 
+    async function loadContentForEdit(articleId) {
+            const articleToEdit = await apiRequest(`/articles/${articleId}`);
+            setContent({...articleToEdit.article});
+    }
+
     async function handleSubmit(e) {
         e.preventDefault();
-            const result = await fetch("http://localhost:3000/api/articles", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(content)
-            });
-            if (!result.ok) {
-                console.error("Error submitting article: ", result.statusText);
-                alert(`Error submitting article. Please try again.
-                       Error: ${result.statusText}`);
-            } else {
+        console.log({...content});
+        try {
+            const resetAuthor = getStoredAccount();
+            if (!content._id && resetAuthor.accountType === "provider") {
+                const result = await apiRequest("/articles", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({...content})
+                });
                 alert("Article submitted successfully!");
-                console.log("Submitted content: ", {content});
+                console.log(result);
+            } else {
+                const contentId = content._id;
+                const result = await apiRequest(`/articles/${contentId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({...content})
+                });
+                alert("Article updated successfully!");
+                console.log(result);
+            }
+            if (resetAuthor.accountType === "provider") {
+                setContent({author: resetAuthor.username, title: "", category: "activity", subhead: "", activity: {activityType: "", body: ""}, meal: {cuisine: "", mealType: "", body: ""}});
+            } else {
+                setContent({author: "", title: "", category: "activity", subhead: "", activity: {activityType: "", body: ""}, meal: {cuisine: "", mealType: "", body: ""}});
+            }
+        } catch (error) {
+            console.error("Error submitting article: ", error.message);
+            alert(`Error submitting article. Please try again.
+                   Error: ${error.message}`);
+        }
+    }
+
+    function handleClear(e) {
+        e.preventDefault();
+        const resetAuthor = getStoredAccount();
+        if (resetAuthor.accountType === "provider") {
+            setContent({author: resetAuthor.username, title: "", category: "activity", subhead: "", activity: {activityType: "", body: ""}, meal: {cuisine: "", mealType: "", body: ""}});
+        } else {
+            setContent({author: "", title: "", category: "activity", subhead: "", activity: {activityType: "", body: ""}, meal: {cuisine: "", mealType: "", body: ""}});
         }
     }
     
@@ -109,6 +150,10 @@ function ArticleEditor ({articleId}) {
                 <form onSubmit={handleSubmit}>
                     <table>
                         <tbody>
+                        <tr>
+                            <td>Author:</td>
+                            <td>{content.author}</td>
+                        </tr>
                         <tr>
                             <td><label>Category:</label></td>
                             <td><select value={content.category} onChange={handleCategoryChange}>
@@ -152,7 +197,7 @@ function ArticleEditor ({articleId}) {
                         rows="30"
                         cols="100"
                     /><br />
-                    <input type="submit" />
+                    <input type="submit" /> <button onClick={handleClear}>Reset</button>
                 </form>
             </div>
             <div className="article-preview">

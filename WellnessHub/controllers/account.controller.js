@@ -64,7 +64,7 @@ const loginAccount = async (req, res) => {
 
 const registerAccount = async (req, res) => {
     try {
-        const { username, password, emailAddress } = req.body;
+        const { username, password, emailAddress, accountType } = req.body;
 
         if (!username || !password || !emailAddress) {
             return res.status(400).json({
@@ -93,10 +93,10 @@ const registerAccount = async (req, res) => {
         const newAccount = new Account({
             username,
             password: hashedPassword,
-            accountType: "user",
+            accountType,
             emailAddress
         });
-
+        
         await newAccount.save();
 
         return res.status(201).json({
@@ -118,18 +118,14 @@ const registerAccount = async (req, res) => {
 
 const activateAccount = async (req, res) => {
     try {
-        const account = await Account.findById(
-            req.account.accountId
-        ).select("-password");
+        const account = await Account.findByIdAndUpdate(req.params.id, req.body)
+            .select("-password");
 
         if (!account) {
             return res.status(404).json({
                 message: "Account not found."
             });
         }
-
-        account.isActive = true;
-        await account.save();
 
         return res.status(200).json({
             message: "Account activated successfully.",
@@ -151,7 +147,7 @@ const activateAccount = async (req, res) => {
 const deleteAccount = async (req, res) => {
     try {
         const account = await Account.findByIdAndDelete(
-            req.account.accountId
+            req.params.id
         );
 
         if (!account) {
@@ -213,7 +209,7 @@ const getAccounts = async (req, res) => {
 
 const getAccountById = async (req, res) => {
     try {
-        const account = await Account.findById(req.params.id).select("-password");
+        const account = await Account.findById(req.params.id);
 
         if (!account) {
             return res.status(404).json({

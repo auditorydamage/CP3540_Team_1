@@ -20,8 +20,8 @@ const {
 // Public login route
 router.post("/login", loginAccount);
 router.post("/register", registerAccount);
-router.put("/activate", verifyToken, activateAccount);
-router.delete("/delete", verifyToken, deleteAccount);
+router.put("/activate/:id", verifyToken, activateAccount);
+router.delete("/:id", verifyToken, deleteAccount);
 router.get("/list", verifyToken, getAccounts);
 router.get("/:id", verifyToken, getAccountById);
 router.put("/:id", verifyToken, modifyAccount);

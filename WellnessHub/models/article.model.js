@@ -6,11 +6,9 @@ const ActivitySubSchema = mongoose.Schema({
 });
 
 const MealSubSchema = mongoose.Schema({
-    name: String,
     cuisine: String,
     mealType: String,
     body: String,
-    ingredients: [String]
 });
 
 const ArticleSchema = mongoose.Schema({

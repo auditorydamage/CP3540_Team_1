@@ -1,44 +1,88 @@
 import { useState, useEffect } from 'react';
+import { apiRequest } from '../services/api.js';
+import { ArticleEditor } from '../components/Article.js';
 
 function ArticleAdmin () {
     const [articles, setArticles] = useState([]);
-    const [article, setArticle] = useState({articleId: "", author: "", title: "", category: "activity"});
+    const [articleId, setArticleId] = useState("");
+    const [editVisible, setEditVisible] = useState(false);
 
     useEffect(() => {
-        async function fetchArticles() {
-            try {
-                const data = await fetch(`http://localhost:3000/api/articles/`);
-                const fetchedArticles = await data.json();
-                setArticles(fetchedArticles.articles);
-            } catch (error) {
-                console.error("Error fetching users:", error);
-            }
-        }
         fetchArticles();
     }, []);
 
-    async function handleEdit (e) {
-    return e;
+    async function fetchArticles() {
+      try {
+          const data = await apiRequest("/articles");
+          const fetchedArticles = data.articles;
+          setArticles(fetchedArticles);
+      } catch (error) {
+          console.error("Error fetching articles:", error);
+      }
+    }
+
+  async function handleEdit (e) {
+    e.preventDefault();
+    setArticleId(e.target.parentNode.parentNode.id);
   }
 
   async function handlePublish (e) {
     e.preventDefault();
-    const articleId = e.target.parentNode.id;
-    const article = await fetch(`http://localhost:3000/api/articles/${articleId}`);
-    if (article.isPublished) {
-      await fetch(`http://localhost:3000/api/articles/unpublish/${articleId}`);
-    } else {
-      await fetch(`http://localhost:3000/api/articles/publish/${articleId}`); 
+    const articleId = e.target.parentNode.parentNode.id;
+    const updatedArticle = await apiRequest(`/articles/${articleId}`);
+    try { 
+      if (!updatedArticle.article.isPublished) {
+        updatedArticle.article.isPublished = true;
+        await apiRequest(`/articles/publish/${articleId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(updatedArticle.article)
+        });
+        alert("Article is published.");
+      } else {
+        updatedArticle.article.isPublished = false;
+        await apiRequest(`/articles/unpublish/${articleId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(updatedArticle.article)
+        });
+        alert("Article is unpublished.");
+      }
+    } catch (error) {
+      console.log("Unable to change publication status: ", error.message);
+      alert(`Unable to change publication status: ${error.message}`);
     }
+    fetchArticles();
   }
 
   async function handleDelete (e) {
     e.preventDefault();
     const articleId = e.target.parentNode.id;
-    const deletedArticle = await fetch(`http://localhost:3000/api/articles/delete/${articleId}`);
+    try {
+      const deletedArticle = await apiRequest(`/articles/${articleId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      alert("Article successfully deleted.");
+    } catch (error) {
+      alert("Unable to delete article: ", error.message);
+    }
+    fetchArticles();
+  }
+
+  function handleCloseEditor () {
+    setArticleId("");
+    setEditVisible(false);
   }
 
   return (
+    <>
           <table>
             <thead>
               <tr>
@@ -65,7 +109,14 @@ function ArticleAdmin () {
             )}
             </tbody>
           </table>
-
+          { articleId ? 
+          <>
+            <h3>Edit an article</h3>
+            <ArticleEditor articleId={articleId} />
+            <button onClick={handleCloseEditor}>Close editor</button>
+          </>
+          : null }
+        </>
   )
 }
 

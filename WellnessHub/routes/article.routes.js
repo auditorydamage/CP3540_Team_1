@@ -49,14 +49,14 @@ articleRouter.put(
 );
 
 articleRouter.put(
-    "/:id/publish",
+    "/publish/:id",
     verifyToken,
     authorizeRoles("provider", "admin"),
     publishArticle
 );
 
 articleRouter.put(
-    "/:id/unpublish",
+    "/unpublish/:id",
     verifyToken,
     authorizeRoles("provider", "admin"),
     unpublishArticle

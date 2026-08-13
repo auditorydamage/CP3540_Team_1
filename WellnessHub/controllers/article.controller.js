@@ -222,7 +222,7 @@ const publishArticle = async (req, res) => {
             });
         }
 
-        const article = await Article.findByIdAndUpdate(req.params.id, { isPublished: true });
+        const article = await Article.findByIdAndUpdate(req.params.id, req.body);
         if (!article) {
             return res.status(404).json({
                 message: "Article not found."
@@ -259,7 +259,7 @@ const unpublishArticle = async (req, res) => {
             });
         }
 
-        const article = await Article.findByIdAndUpdate(req.params.id, { isPublished: false });
+        const article = await Article.findByIdAndUpdate(req.params.id, req.body);
         if (!article) {
             return res.status(404).json({
                 message: "Article not found."

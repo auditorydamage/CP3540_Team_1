@@ -9,7 +9,7 @@ function AdminDashboard() {
     <div style={{ padding: "30px" }}>
       <h1>Welcome to WellnessHub!</h1>
 
-      <p>Administrator Dashboard</p>
+      <h2>Administrator Dashboard</h2>
 
       <div
         style={{
