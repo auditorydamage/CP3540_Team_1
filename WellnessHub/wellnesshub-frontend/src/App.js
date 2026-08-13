@@ -18,6 +18,8 @@ import Profile from "./pages/Profile";
 import Register from "./pages/Register";
 import Articles from "./pages/Articles";
 import ArticleDetails from "./pages/ArticleDetails";
+import SleepTracker from "./pages/SleepTracker";
+import HeartRateTracker from "./pages/HeartRateTracker";
 import { WellnessProvider } from "./context/WellnessContext";
 
 function App() {
@@ -47,6 +49,8 @@ function App() {
             <Route path="/recipes" element={<Recipes />} />
             <Route path="/articles" element={<Articles />} />
             <Route path="/articles/:id" element={<ArticleDetails />} />
+            <Route path="/sleep" element={<SleepTracker />} />
+            <Route path="/heartrate" element={<HeartRateTracker />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
 
