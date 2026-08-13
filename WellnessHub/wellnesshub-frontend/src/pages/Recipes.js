@@ -172,15 +172,16 @@ function Recipes() {
 
   return (
     <div style={{ padding: "30px" }}>
-      <h1>🍎 Recipes & Meal Planning</h1>
+      <h1>🍎 Meal Planning</h1>
 
       <p>
-        Plan your meals and view personalized recommendations
-        as they become available.
+        Plan and manage your meals.
       </p>
 
       <section style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>Add a Meal</h2>
+        <h2 style={{ marginTop: 0 }}>
+          Add a Meal
+        </h2>
 
         <form onSubmit={handleAddMeal}>
           <div
@@ -191,7 +192,9 @@ function Recipes() {
             }}
           >
             <div>
-              <label htmlFor="meal">Meal</label>
+              <label htmlFor="meal">
+                Meal
+              </label>
 
               <input
                 id="meal"
@@ -206,7 +209,9 @@ function Recipes() {
             </div>
 
             <div>
-              <label htmlFor="mealDate">Date</label>
+              <label htmlFor="mealDate">
+                Date
+              </label>
 
               <input
                 id="mealDate"
@@ -243,7 +248,9 @@ function Recipes() {
       </section>
 
       <section style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>Today's Meals</h2>
+        <h2 style={{ marginTop: 0 }}>
+          Today's Meals
+        </h2>
 
         {loading ? (
           <p>Loading meal plans...</p>
@@ -270,7 +277,9 @@ function Recipes() {
       </section>
 
       <section style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>Meal Plan History</h2>
+        <h2 style={{ marginTop: 0 }}>
+          Meal Plan History
+        </h2>
 
         {loading ? (
           <p>Loading meal plans...</p>
@@ -294,17 +303,6 @@ function Recipes() {
             />
           ))
         )}
-      </section>
-
-      <section style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>
-          Personalized Recommendations
-        </h2>
-
-        <p style={{ color: "#667085" }}>
-          Complete your health profile to help personalize
-          future recommendations.
-        </p>
       </section>
     </div>
   );
@@ -377,7 +375,9 @@ function MealPlanRow({
           }}
         >
           <div>
-            <strong>🍽️ {record.meal}</strong>
+            <strong>
+              🍽️ {record.meal}
+            </strong>
 
             <div
               style={{
@@ -448,7 +448,14 @@ function createLocalDate(dateString) {
     .split("-")
     .map(Number);
 
-  return new Date(year, month - 1, day, 12, 0, 0);
+  return new Date(
+    year,
+    month - 1,
+    day,
+    12,
+    0,
+    0
+  );
 }
 
 function formatDate(dateValue) {
