@@ -34,6 +34,8 @@ function Articles() {
     }
   }
 
+  const recommendedArticles = articles.slice(0, 3);
+
   return (
     <div style={{ padding: "30px" }}>
       <h1>📚 Wellness Articles</h1>
@@ -51,47 +53,129 @@ function Articles() {
         </p>
       )}
 
-      {!loading && !error && articles.length === 0 && (
-        <div style={emptyStyle}>
-          <h2>No Articles Available</h2>
-          <p>
-            Published wellness articles will appear here.
-          </p>
-        </div>
-      )}
+      {!loading && !error && (
+        <>
+          <section style={recommendationSectionStyle}>
+            <div style={sectionHeaderStyle}>
+              <div>
+                <h2 style={{ marginBottom: "6px" }}>
+                  ⭐ Recommended for You
+                </h2>
 
-      <div style={gridStyle}>
-        {articles.map((article) => (
-          <article key={article._id} style={cardStyle}>
-            <span style={categoryStyle}>
-              {getCategoryLabel(article)}
-            </span>
+                <p
+                  style={{
+                    margin: 0,
+                    color: "#667085"
+                  }}
+                >
+                  Personalized recommendations will be based
+                  on the articles you view.
+                </p>
+              </div>
+            </div>
 
-            <h2>{article.title}</h2>
+            {recommendedArticles.length === 0 ? (
+              <div style={recommendationEmptyStyle}>
+                <p style={{ margin: 0 }}>
+                  Recommendations will appear here as you
+                  explore WellnessHub articles.
+                </p>
+              </div>
+            ) : (
+              <div style={recommendationGridStyle}>
+                {recommendedArticles.map((article) => (
+                  <article
+                    key={article._id}
+                    style={recommendedCardStyle}
+                  >
+                    <span style={recommendedLabelStyle}>
+                      Recommended
+                    </span>
 
-            {article.subhead && (
-              <p style={{ color: "#465269" }}>
-                {article.subhead}
-              </p>
+                    <span style={categoryStyle}>
+                      {getCategoryLabel(article)}
+                    </span>
+
+                    <h3>{article.title}</h3>
+
+                    {article.subhead && (
+                      <p style={{ color: "#465269" }}>
+                        {article.subhead}
+                      </p>
+                    )}
+
+                    <p style={metaStyle}>
+                      By{" "}
+                      {article.author ||
+                        "WellnessHub Provider"}
+                    </p>
+
+                    <Link
+                      to={`/articles/${article._id}`}
+                      style={readButtonStyle}
+                    >
+                      Read Article
+                    </Link>
+                  </article>
+                ))}
+              </div>
             )}
+          </section>
 
-            <p style={metaStyle}>
-              By {article.author || "WellnessHub Provider"}
-            </p>
+          <section style={{ marginTop: "40px" }}>
+            <h2>All Articles</h2>
 
-            <p style={metaStyle}>
-              {article.views || 0} views
-            </p>
+            {articles.length === 0 ? (
+              <div style={emptyStyle}>
+                <h2>No Articles Available</h2>
 
-            <Link
-              to={`/articles/${article._id}`}
-              style={readButtonStyle}
-            >
-              Read Article
-            </Link>
-          </article>
-        ))}
-      </div>
+                <p>
+                  Published wellness articles will appear
+                  here.
+                </p>
+              </div>
+            ) : (
+              <div style={gridStyle}>
+                {articles.map((article) => (
+                  <article
+                    key={article._id}
+                    style={cardStyle}
+                  >
+                    <span style={categoryStyle}>
+                      {getCategoryLabel(article)}
+                    </span>
+
+                    <h2>{article.title}</h2>
+
+                    {article.subhead && (
+                      <p style={{ color: "#465269" }}>
+                        {article.subhead}
+                      </p>
+                    )}
+
+                    <p style={metaStyle}>
+                      By{" "}
+                      {article.author ||
+                        "WellnessHub Provider"}
+                    </p>
+
+                    <p style={metaStyle}>
+                      {article.views || 0} views
+                    </p>
+
+                    <Link
+                      to={`/articles/${article._id}`}
+                      style={readButtonStyle}
+                    >
+                      Read Article
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
     </div>
   );
 }
@@ -112,9 +196,60 @@ function getCategoryLabel(article) {
   return "Wellness";
 }
 
-const gridStyle = {
+const recommendationSectionStyle = {
   maxWidth: "1100px",
   marginTop: "30px",
+  padding: "28px",
+  backgroundColor: "#ffffff",
+  borderRadius: "12px",
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)"
+};
+
+const sectionHeaderStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "20px"
+};
+
+const recommendationGridStyle = {
+  marginTop: "22px",
+  display: "grid",
+  gridTemplateColumns:
+    "repeat(auto-fit, minmax(260px, 1fr))",
+  gap: "18px"
+};
+
+const recommendedCardStyle = {
+  padding: "20px",
+  border: "1px solid #e1e5ea",
+  borderRadius: "10px",
+  backgroundColor: "#f9fafb"
+};
+
+const recommendedLabelStyle = {
+  display: "inline-block",
+  marginRight: "8px",
+  marginBottom: "10px",
+  padding: "5px 10px",
+  borderRadius: "20px",
+  backgroundColor: "#fff3cd",
+  color: "#7a5b00",
+  fontSize: "12px",
+  fontWeight: "700"
+};
+
+const recommendationEmptyStyle = {
+  marginTop: "20px",
+  padding: "20px",
+  borderRadius: "8px",
+  backgroundColor: "#f5f7fa",
+  color: "#667085"
+};
+
+const gridStyle = {
+  maxWidth: "1100px",
+  marginTop: "20px",
   display: "grid",
   gridTemplateColumns:
     "repeat(auto-fit, minmax(280px, 1fr))",
