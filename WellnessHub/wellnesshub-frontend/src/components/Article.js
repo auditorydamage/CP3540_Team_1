@@ -4,7 +4,7 @@ import { apiRequest, getStoredAccount } from '../services/api.js';
 
 function ArticleDisplay ({articleId}) {
 
-    const [ content, setContent ] = useState({_id: "", author: "", title: "", category: "", subhead: ""});
+    const [content, setContent] = useState({_id: "", author: "", title: "", category: "", subhead: ""});
     
     useEffect(() => {
         async function fetchContent() {
@@ -26,10 +26,10 @@ function ArticleDisplay ({articleId}) {
             <div className="article-header">
                 <h3>{content.title}</h3>
                 <p>By {content.author}</p>
-                <p>In: {content.activity.activityType}</p>
+                <p>In: {content.category === "activity" ? content.activity.activityType : content.meal.mealType}</p>
             </div>
             <div className="article-content">
-                <Markdown>{content.activity.body}</Markdown>
+                <Markdown>{content.category === "activity" ? content.activity.body : content.meal.body}</Markdown>
             </div>
         </>
     );
@@ -37,17 +37,20 @@ function ArticleDisplay ({articleId}) {
 
 function ArticleEditor ({articleId}) {
 
-    const [ content, setContent ] = useState({author: "", title: "", category: "", activity: {activityType: "", body: ""}, meal: {cuisine: "", mealType: "", body: ""}});
-    
+    const [content, setContent] = useState({author: "", title: "", category: "", activity: {activityType: "", body: ""}, meal: {cuisine: "", mealType: "", body: ""}});
+    const [forEditing, setForEditing] = useState(false);
+    const [editVisible, setEditVisible] = useState(false);
+    const account = getStoredAccount();
 
     useEffect(() => {
         if (articleId) {
-            console.log("Article ID passed: ", articleId);
             loadContentForEdit(articleId);
+            setForEditing(true);
+            setEditVisible(true);
         } else {
-            console.log("No article ID passed, blank entry.");
-            const account = getStoredAccount();
             setContent({...content, author: account.username, category: "activity"});
+            setForEditing(false);
+            setEditVisible(true);
         }
     },[articleId]);
 
@@ -91,8 +94,8 @@ function ArticleEditor ({articleId}) {
     }
 
     async function loadContentForEdit(articleId) {
-            const articleToEdit = await apiRequest(`/articles/${articleId}`);
-            setContent({...articleToEdit.article});
+        const articleToEdit = await apiRequest(`/articles/${articleId}`);
+        setContent({...articleToEdit.article});
     }
 
     async function handleSubmit(e) {
@@ -127,6 +130,7 @@ function ArticleEditor ({articleId}) {
             } else {
                 setContent({author: "", title: "", category: "activity", subhead: "", activity: {activityType: "", body: ""}, meal: {cuisine: "", mealType: "", body: ""}});
             }
+            setEditVisible(false);
         } catch (error) {
             console.error("Error submitting article: ", error.message);
             alert(`Error submitting article. Please try again.
@@ -142,67 +146,83 @@ function ArticleEditor ({articleId}) {
         } else {
             setContent({author: "", title: "", category: "activity", subhead: "", activity: {activityType: "", body: ""}, meal: {cuisine: "", mealType: "", body: ""}});
         }
+        setForEditing(false);
+    }
+
+    function toggleEntry (e) {
+        e.preventDefault();
+        setEditVisible(!editVisible);
     }
     
     return (
         <>
             <div className="article-editor">
-                <form onSubmit={handleSubmit}>
-                    <table>
-                        <tbody>
-                        <tr>
-                            <td>Author:</td>
-                            <td>{content.author}</td>
-                        </tr>
-                        <tr>
-                            <td><label>Category:</label></td>
-                            <td><select value={content.category} onChange={handleCategoryChange}>
-                                <option value="meal">Meal</option>
-                                <option value="activity">Activity</option>
-                            </select></td>
-                        </tr>
-                        { content.category === "activity" ?
-                            <>
+                { !forEditing ? 
+                    <h3 style={{ cursor: "pointer" }} onClick={toggleEntry}>{ !editVisible ? <>▶</> : <>▼</> }     Create new article</h3>
+                    : 
+                    <h3 style={{ cursor: "pointer" }} onClick={toggleEntry}>{ !editVisible ? <>▶</> : <>▼</> }     Edit article</h3>
+                }
+                { !editVisible ? null : 
+                <>
+                    <form onSubmit={handleSubmit}>
+                        <table>
+                            <tbody>
                             <tr>
-                                <td><label>Activity type:</label></td>
-                                <td><input type="text" name="activity.activityType" value={content.activity.activityType} onChange={handleActivityTypeChange} /></td>
-                            </tr>
-                            </>
-                         : 
-                         <>
-                            <tr>
-                                <td><label>Meal type:</label></td>
-                                <td><input type="text" name="meal.mealType" value={content.meal.mealType} onChange={handleMealTypeChange} /></td>
+                                <td>Author:</td>
+                                <td>{content.author}</td>
                             </tr>
                             <tr>
-                                <td><label>Cuisine:</label></td>
-                                <td><input type="text" name="meal.cuisine" value={content.meal.cuisine} onChange={handleCuisineChange} /></td>
+                                <td><label>Category:</label></td>
+                                <td><select value={content.category} onChange={handleCategoryChange}>
+                                    <option value="meal">Meal</option>
+                                    <option value="activity">Activity</option>
+                                </select></td>
                             </tr>
-                            </> }
-                        <tr>
-                            <td><label>Title:</label></td>
-                            <td><input type="text" name="title" value={content.title} onChange={handleTitleChange} /></td>
-                        </tr>
-                        <tr>
-                            <td><label>Subhead:</label></td>
-                            <td><input type="text" name="subhead" value={content.subhead} onChange={handleSubheadChange} /></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                    <label>Enter content here in Markdown format:</label>
-                    <textarea 
-                        name="body"
-                        value={content.category === "activity" ? content.activity.body : content.meal.body}
-                        onChange={handleBodyChange}
-                        rows="30"
-                        cols="100"
-                    /><br />
-                    <input type="submit" /> <button onClick={handleClear}>Reset</button>
-                </form>
-            </div>
-            <div className="article-preview">
-                <p>Preview:</p>
-                <Markdown>{content.category === "activity" ? content.activity.body : content.meal.body}</Markdown>
+                            { content.category === "activity" ?
+                                <>
+                                    <tr>
+                                        <td><label>Activity type:</label></td>
+                                        <td><input type="text" name="activity.activityType" value={content.activity.activityType} onChange={handleActivityTypeChange} /></td>
+                                    </tr>
+                                </>
+                            : 
+                                <>
+                                    <tr>
+                                        <td><label>Meal type:</label></td>
+                                        <td><input type="text" name="meal.mealType" value={content.meal.mealType} onChange={handleMealTypeChange} /></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label>Cuisine:</label></td>
+                                        <td><input type="text" name="meal.cuisine" value={content.meal.cuisine} onChange={handleCuisineChange} /></td>
+                                    </tr>
+                                </>
+                            }
+                            <tr>
+                                <td><label>Title:</label></td>
+                                <td><input type="text" name="title" value={content.title} onChange={handleTitleChange} /></td>
+                            </tr>
+                            <tr>
+                                <td><label>Subhead:</label></td>
+                                <td><input type="text" name="subhead" value={content.subhead} onChange={handleSubheadChange} /></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <label>Enter content here in Markdown format:</label>
+                        <textarea 
+                            name="body"
+                            value={content.category === "activity" ? content.activity.body : content.meal.body}
+                            onChange={handleBodyChange}
+                            rows="30"
+                            cols="100"
+                        /><br />
+                        <input type="submit" /> { account.accountType === "provider" ? <button onClick={handleClear}>Reset</button> : null }
+                    </form>
+                    <div className="article-preview">
+                        <p>Preview:</p>
+                        <Markdown>{content.category === "activity" ? content.activity.body : content.meal.body}</Markdown>
+                    </div>
+                </>
+                }
             </div>
         </>
     );

@@ -1,9 +1,20 @@
-import { useState, useEffect } from "react";
-import { ArticleEditor } from "../components/Article.js";
+import { useState } from "react";
 import { AccountAdmin } from "../components/AccountAdmin.js";
 import { ArticleAdmin } from "../components/ArticleAdmin.js";
 
 function AdminDashboard() {
+
+  const [articleVisible, setArticleVisible] = useState(false);
+  const [accountVisible, setAccountVisible] = useState(false);
+
+  function toggleArtAdmin () {
+    setArticleVisible(!articleVisible);
+    console.log(articleVisible);
+  }
+
+  function toggleAcctAdmin () {
+    setAccountVisible(!accountVisible);
+  }
 
   return (
     <div style={{ padding: "30px" }}>
@@ -28,8 +39,13 @@ function AdminDashboard() {
             boxShadow: "0 2px 5px rgba(0,0,0,.15)"
           }}
         >
-          <h3>Manage accounts</h3>
-          <AccountAdmin />
+          { !accountVisible ? 
+            <h3 style={{ cursor: "pointer" }} onClick={toggleAcctAdmin}>▶     Manage accounts</h3> : 
+            <>
+              <h3 style={{ cursor: "pointer" }} onClick={toggleAcctAdmin}>▼     Manage accounts</h3>
+              <AccountAdmin />
+           </>
+          }
         </div>
 
         <div
@@ -41,8 +57,13 @@ function AdminDashboard() {
             boxShadow: "0 2px 5px rgba(0,0,0,.15)"
           }}
         >
-          <h3>Manage articles</h3>
-          <ArticleAdmin />
+          { !articleVisible ? 
+            <h3 style={{ cursor: "pointer" }} onClick={toggleArtAdmin}>▶     Manage articles</h3> : 
+            <>
+              <h3 style={{ cursor: "pointer" }} onClick={toggleArtAdmin}>▼     Manage articles</h3>
+              <ArticleAdmin />
+           </>
+          }
         </div>
       </div>
     </div>

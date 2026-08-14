@@ -9,7 +9,7 @@ function ProviderDashboard() {
 
   useEffect(() => {
     fetchArticles(author);
-  }, [articles]);
+  },[]);
 
   async function fetchArticles(author) {
       try {
@@ -56,7 +56,7 @@ function ProviderDashboard() {
     e.preventDefault();
     const articleId = e.target.parentNode.parentNode.id;
     try {
-      const deletedArticle = await apiRequest(`/articles/${articleId}`, {
+      await apiRequest(`/articles/${articleId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json"
@@ -131,14 +131,10 @@ function ProviderDashboard() {
             }}
           >
             { articleId !== "" ?
-              <>
-              <h3>Edit an Article</h3>
               <ArticleEditor articleId={articleId} />
-              </> :
-              <>
-              <h3>Create an Article</h3>
+             :
               <ArticleEditor />
-              </> }
+            }
           </div>
         </div>
       </div>
