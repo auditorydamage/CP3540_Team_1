@@ -5,7 +5,7 @@ import { ArticleEditor } from '../components/Article.js';
 function ArticleAdmin () {
     const [articles, setArticles] = useState([]);
     const [articleId, setArticleId] = useState("");
-    const [editVisible, setEditVisible] = useState(false);
+    const [filter, setFilter] = useState("all");
 
     useEffect(() => {
         fetchArticles();
@@ -20,6 +20,11 @@ function ArticleAdmin () {
           console.error("Error fetching articles:", error);
       }
     }
+  
+  function handleFilter(e) {
+    e.preventDefault();
+    setFilter(e.target.value);
+  }
 
   async function handleEdit (e) {
     e.preventDefault();
@@ -63,7 +68,7 @@ function ArticleAdmin () {
     e.preventDefault();
     const articleId = e.target.parentNode.id;
     try {
-      const deletedArticle = await apiRequest(`/articles/${articleId}`, {
+      await apiRequest(`/articles/${articleId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json"
@@ -76,13 +81,14 @@ function ArticleAdmin () {
     fetchArticles();
   }
 
-  function handleCloseEditor () {
-    setArticleId("");
-    setEditVisible(false);
-  }
-
   return (
     <>
+          <label>Filter articles by: </label>
+          <select value={filter} onChange={handleFilter}>
+            <option value="all">All</option>
+            <option value="activity">Activities</option>
+            <option value="meal">Meals</option>
+          </select>
           <table>
             <thead>
               <tr>
@@ -93,27 +99,29 @@ function ArticleAdmin () {
             </thead>
             <tbody>
             { !articles ? null : articles.map((article) => {
-                return (
-                  <>
-                    <tr key={article._id} id={article._id}>
-                      <td>{article.title}</td>
-                      <td>{article.category}</td>
-                      <td>{article.isPublished ? "Published" : "Draft"}</td>
-                      <td><button onClick={handleEdit}>Edit</button></td>
-                      <td><button onClick={handlePublish}>{ article.isPublished ? "Unpublish" : "Publish" }</button></td>
-                      <td><button onClick={handleDelete}>Delete</button></td>
-                    </tr>
-                  </>
-                )
+                if (article.category === filter || filter === "all") {
+                  return (
+                    <>
+                      <tr key={article._id} id={article._id}>
+                        <td>{article.title}</td>
+                        <td>{article.category}</td>
+                        <td>{article.isPublished ? "Published" : "Draft"}</td>
+                        <td><button onClick={handleEdit}>Edit</button></td>
+                        <td><button onClick={handlePublish}>{ article.isPublished ? "Unpublish" : "Publish" }</button></td>
+                        <td><button onClick={handleDelete}>Delete</button></td>
+                      </tr>
+                    </>
+                  )
+                } else { 
+                  return null;
+                }
               }
             )}
             </tbody>
           </table>
           { articleId ? 
           <>
-            <h3>Edit an article</h3>
             <ArticleEditor articleId={articleId} />
-            <button onClick={handleCloseEditor}>Close editor</button>
           </>
           : null }
         </>

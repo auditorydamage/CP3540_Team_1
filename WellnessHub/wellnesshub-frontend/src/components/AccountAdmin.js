@@ -4,6 +4,9 @@ import { apiRequest } from "../services/api.js";
 function AccountAdmin() {
     const [users, setUsers] = useState([]);
     const [user, setUser] = useState({_id: "", username: "", emailAddress: "", accountType: "user"});
+    const [entryVisible, setEntryVisible] = useState(false);
+    const [filter, setFilter] = useState("all");
+    const [textFilter, setTextFilter] = useState("");
 
     useEffect(() => {
         fetchUsers();
@@ -26,6 +29,7 @@ function AccountAdmin() {
         const selectedAccount = await apiRequest(`/accounts/${userId}`);
         const accountData = selectedAccount.account;
         setUser({...accountData});
+        setEntryVisible(true);
         console.log(`Editing user with ID: ${userId}`);
     }
 
@@ -33,7 +37,7 @@ function AccountAdmin() {
         e.preventDefault();
         try {
             if (!user._id) {
-                const createdAccount = await apiRequest(`/accounts/register`, {
+                await apiRequest(`/accounts/register`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -41,7 +45,7 @@ function AccountAdmin() {
                     body: JSON.stringify({...user})
                 });
             } else {
-                const updatedAccount = await apiRequest(`/accounts/${user._id}`, {
+                await apiRequest(`/accounts/${user._id}`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json"
@@ -50,11 +54,11 @@ function AccountAdmin() {
                 });
             }
         setUser({_id: "", username: "", emailAddress: "", password: "", accountType: "user"});
-        console.log(`Submit user: ${JSON.stringify(user)}`);
         } catch (error) {
             console.log("Unable to submit user info: ", error.message);
             alert(`Unable to submit user information: ${error.message}`);
         }
+        setEntryVisible(false);
         fetchUsers();
     }
 
@@ -106,8 +110,40 @@ function AccountAdmin() {
         setUser({_id: "", username: "", emailAddress: "", password: "", accountType: "user"});
     }
 
+    function toggleEntry (e) {
+        e.preventDefault();
+        setEntryVisible(!entryVisible);
+    }
+
+    function handleFilter(e) {
+        e.preventDefault();
+        setFilter(e.target.value);
+    }
+
+    function handleTextFilter (e) {
+        e.preventDefault();
+        setTextFilter(e.target.value);
+    }
+
     return (
         <>
+            <table>
+                <tbody>
+                    <tr>
+                        <td>Filter by: </td>
+                        <td><select value={filter} onChange={handleFilter}>
+                            <option value="all">All</option>
+                            <option value="user">User</option>
+                            <option value="provider">Provider</option>
+                            <option value="admin">Administrator</option>
+                        </select></td>
+                    </tr>
+                    <tr>
+                        <td>Search pattern: </td>
+                        <td><input value={textFilter} onChange={handleTextFilter}></input></td>
+                    </tr>
+                </tbody>
+            </table>
             <table>
                 <thead>
                     <tr>
@@ -118,22 +154,29 @@ function AccountAdmin() {
                 </thead>
                 <tbody>
                     { !users ? null : users.map((user) => {
-                        return (
-                            <>
-                                <tr id={user._id} key={user._id}>
-                                    <td>{user.username}</td>
-                                    <td>{user.emailAddress}</td>
-                                    <td>{user.accountType}</td>
-                                    <td><button onClick={handleEdit}>Edit</button></td>
-                                    { user.isActive ? <td><button onClick={handleActivate}>Deactivate</button></td> : <td><button onClick={handleActivate}>Activate</button></td> }
-                                    <td><button onClick={handleDelete}>Delete</button></td>
-                                </tr>
-                            </>
-                        )
+                        if ((user.accountType === filter || filter === "all") && user.username.includes(textFilter) ) {
+                            return (
+                                <>
+                                    <tr id={user._id} key={user._id}>
+                                        <td>{user.username}</td>
+                                        <td>{user.emailAddress}</td>
+                                        <td>{user.accountType}</td>
+                                        <td><button onClick={handleEdit}>Edit</button></td>
+                                        { user.isActive ? <td><button onClick={handleActivate}>Deactivate</button></td> : <td><button onClick={handleActivate}>Activate</button></td> }
+                                        <td><button onClick={handleDelete}>Delete</button></td>
+                                    </tr>
+                                </>
+                            )
+                        }
+                        return (<></>);
                     })}
                 </tbody>
             </table>
-            { !user._id ? <h3>Create new user</h3> : <h3>Edit user</h3> }
+            { !user._id ? 
+                <h3 style={{ cursor: "pointer" }} onClick={toggleEntry}>{ !entryVisible ? <>▶</> : <>▼</> }     Create new user</h3> : 
+                <h3 style={{ cursor: "pointer" }} onClick={toggleEntry}>{ !entryVisible ? <>▶</> : <>▼</> }     Edit user</h3>
+            }
+            { !entryVisible ? null : 
                 <form onSubmit={handleSubmit}>
                     <table>
                         <tbody>
@@ -191,6 +234,7 @@ function AccountAdmin() {
                         </tbody>
                     </table>
                 </form>
+            } 
         </>
     )
 }
