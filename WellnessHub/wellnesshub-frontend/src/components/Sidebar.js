@@ -1,8 +1,10 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { logout } from "../services/api";
+import { logout, getStoredAccount } from "../services/api";
 
 function Sidebar() {
   const navigate = useNavigate();
+
+  const account = getStoredAccount();
 
   const linkStyle = ({ isActive }) => ({
     display: "block",
@@ -35,6 +37,8 @@ function Sidebar() {
       <hr />
 
       <nav>
+        { account.accountType === "user" &&
+        <>
         <NavLink to="/dashboard" style={linkStyle}>
           🏠 Dashboard
         </NavLink>
@@ -74,6 +78,19 @@ function Sidebar() {
         <NavLink to="/profile" style={linkStyle}>
           👤 Profile
         </NavLink>
+        </> }
+
+        { account.accountType === "provider" &&
+         <NavLink to="/provider-dashboard" style={linkStyle}>
+          🏠 Content Provider Dashboard
+         </NavLink>
+        }
+
+        { account.accountType === "admin" &&
+         <NavLink to="/admin-dashboard" style={linkStyle}>
+          🏠 Administrator Dashboard
+         </NavLink>
+        }
       </nav>
 
       <hr />
