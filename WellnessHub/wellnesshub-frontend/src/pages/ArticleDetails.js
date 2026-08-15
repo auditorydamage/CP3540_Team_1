@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiRequest } from "../services/api";
+import Markdown from "react-markdown";
 
 function ArticleDetails() {
   const { id } = useParams();
@@ -112,7 +113,8 @@ function ActivityArticle({ article }) {
         </p>
       )}
 
-      <ArticleBody body={article.activity?.body} />
+      { /* <ArticleBody body={article.activity?.body} /> */ }
+      <Markdown>{article.activity?.body}</Markdown>
     </>
   );
 }
@@ -140,7 +142,8 @@ function MealArticle({ article }) {
         </p>
       )}
 
-      <ArticleBody body={meal.body} />
+      { /* <ArticleBody body={meal.body} /> */ }
+      <Markdown>{meal.body}</Markdown>
 
       {meal.ingredients?.length > 0 && (
         <>
