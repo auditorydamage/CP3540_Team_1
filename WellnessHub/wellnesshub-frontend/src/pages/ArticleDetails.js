@@ -57,6 +57,25 @@ function ArticleDetails() {
     );
   }
 
+  async function handleLike () {
+    const likeDetails = {
+      category: article.category,
+      type: (article.category === "activity" ? article.activity.activityType : article.meal.cuisine)
+    }
+    try {
+      await apiRequest("/likes", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(likeDetails)
+      })
+    } catch (error) {
+      console.error("Unable to like article:", error);
+      setError(error.message);
+    }
+  }
+
   return (
     <div style={{ padding: "30px" }}>
       <Link to="/articles" style={backLinkStyle}>
@@ -88,6 +107,10 @@ function ArticleDetails() {
         <p style={metaStyle}>
           {article.views || 0} views
         </p>
+
+        { /* Like button should go here */ }
+        <p style={metaStyle}><span style={{cursor: "pointer"}} onClick={handleLike}>❤️</span> Like this article</p> 
+        
 
         <hr style={dividerStyle} />
 

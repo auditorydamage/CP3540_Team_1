@@ -34,6 +34,35 @@ function Articles() {
     }
   }
 
+  // Recommendation engine processing will go here. It can happen!
+  
+  async function recommendationEngine (articles) {
+    const articlesToParse = [...articles];
+    const likes = await apiRequest("/likes");
+    const mostLiked = await apiRequest("/likes/likes");
+    const likedActivities = await apiRequest("/likes/category/activity");
+    const likedMeals = await apiRequest("/likes/category/meal");
+    const selectedArticles = [];
+
+    articlesToParse.sort((a, b) => b.views - a.views);
+    
+    selectedArticles.push(
+      articlesToParse.filter(
+        (article) => article.category === mostLiked.highestLike.category)[0]);
+    
+        selectedArticles.push(
+      articlesToParse.filter(
+        (article) => article.category !== mostLiked.highestLike.category)
+      [0]);
+    
+    const randomArticleToGrab = Math.floor(Math.random() * ((articles.length - 1) + 1));
+    selectedArticles.push(articlesToParse[randomArticleToGrab]);
+    
+    console.log(selectedArticles);
+    return selectedArticles;
+  }
+
+  // console.log(recommendationEngine(articles));
   const recommendedArticles = articles.slice(0, 3);
 
   return (
