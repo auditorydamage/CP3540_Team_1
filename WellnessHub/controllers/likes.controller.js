@@ -92,9 +92,17 @@ const updateLikes = async (req, res) => {
                 likes: 1
             });
             await account.save();
+            return res.status(201).json({
+                message: "Successfully added like.",
+                account
+            });
         } else {
             like.likes += 1;
             await account.save();
+            return res.status(200).json({
+                message: "Successfully updated likes.",
+                account
+            });
         }
 
     } catch (error) {

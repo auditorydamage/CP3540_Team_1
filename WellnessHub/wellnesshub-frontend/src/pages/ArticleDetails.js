@@ -9,6 +9,7 @@ function ArticleDetails() {
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [liked, setLiked] = useState(false);
 
   useEffect(() => {
     loadArticle();
@@ -58,21 +59,27 @@ function ArticleDetails() {
   }
 
   async function handleLike () {
-    const likeDetails = {
-      category: article.category,
-      type: (article.category === "activity" ? article.activity.activityType : article.meal.cuisine)
-    }
-    try {
-      await apiRequest("/likes", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(likeDetails)
-      })
-    } catch (error) {
-      console.error("Unable to like article:", error);
-      setError(error.message);
+    if (!liked) {
+      
+      const likeDetails = {
+        category: article.category,
+        type: (article.category === "activity" ? article.activity.activityType : article.meal.cuisine)
+      }
+
+      try {
+        await apiRequest("/likes", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(likeDetails)
+        });
+        setLiked(true);
+      
+      } catch (error) {
+        console.error("Unable to like article:", error);
+        setError(error.message);
+      }
     }
   }
 
@@ -108,9 +115,12 @@ function ArticleDetails() {
           {article.views || 0} views
         </p>
 
-        { /* Like button should go here */ }
-        <p style={metaStyle}><span style={{cursor: "pointer"}} onClick={handleLike}>❤️</span> Like this article</p> 
-        
+        <p style={metaStyle}>
+        { !liked ? 
+            <span style={{cursor: "pointer"}} onClick={handleLike}>❤️ Like this article</span>
+          : <span style={{cursor: "pointer"}} onClick={handleLike}>🥰 Thanks for letting us know what you like!</span>
+        }
+        </p>
 
         <hr style={dividerStyle} />
 

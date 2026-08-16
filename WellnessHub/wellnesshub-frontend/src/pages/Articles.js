@@ -56,9 +56,11 @@ function Articles() {
                 )[0]
               );
             
-          selectedArticles.push(
-            articles.filter(
-              (article) => article.category !== mostLiked.highestLike.category)[0]);
+            if (articles.find((article) => article.category !== mostLiked.highestLike.category)) {
+              selectedArticles.push(
+                articles.filter(
+                  (article) => article.category !== mostLiked.highestLike.category)[0]);
+            }
         }
         
         console.log("Selected articles: ", selectedArticles.length);
