@@ -4,6 +4,7 @@ import { apiRequest } from "../services/api";
 
 function Articles() {
   const [articles, setArticles] = useState([]);
+  const [recommendedArticles, setRecommendedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -26,6 +27,7 @@ function Articles() {
         );
 
       setArticles(publishedArticles);
+      recommendationEngine(publishedArticles);
     } catch (error) {
       console.error("Unable to load articles:", error);
       setError(error.message);
@@ -33,37 +35,35 @@ function Articles() {
       setLoading(false);
     }
   }
-
-  // Recommendation engine processing will go here. It can happen!
   
   async function recommendationEngine (articles) {
-    const articlesToParse = [...articles];
-    const likes = await apiRequest("/likes");
-    const mostLiked = await apiRequest("/likes/likes");
-    const likedActivities = await apiRequest("/likes/category/activity");
-    const likedMeals = await apiRequest("/likes/category/meal");
-    const selectedArticles = [];
+    console.log(articles);
+    try {
+      if (articles.length > 0) {
+        const mostLiked = await apiRequest("/likes/likes");
+        const selectedArticles = [];
 
-    articlesToParse.sort((a, b) => b.views - a.views);
-    
-    selectedArticles.push(
-      articlesToParse.filter(
-        (article) => article.category === mostLiked.highestLike.category)[0]);
-    
+        articles.sort((a, b) => b.views - a.views);
+
         selectedArticles.push(
-      articlesToParse.filter(
-        (article) => article.category !== mostLiked.highestLike.category)
-      [0]);
-    
-    const randomArticleToGrab = Math.floor(Math.random() * ((articles.length - 1) + 1));
-    selectedArticles.push(articlesToParse[randomArticleToGrab]);
-    
-    console.log(selectedArticles);
-    return selectedArticles;
+          articles.filter(
+            (article) => article.category === mostLiked.highestLike.category)[0]);
+          
+        selectedArticles.push(
+          articles.filter(
+            (article) => article.category !== mostLiked.highestLike.category)[0]);
+          
+        const randomArticleToGrab = Math.floor(Math.random() * ((articles.length - 1) + 1));
+        selectedArticles.push(articles[randomArticleToGrab]);
+          
+        setRecommendedArticles([...selectedArticles]);
+      }
+    } catch (error) {
+      console.log("Unable to process recommendations: ", error.message);
+    }
   }
 
-  // console.log(recommendationEngine(articles));
-  const recommendedArticles = articles.slice(0, 3);
+  // const recommendedArticles = articles.slice(0, 3);
 
   return (
     <div style={{ padding: "30px" }}>
