@@ -39,24 +39,39 @@ function Articles() {
   async function recommendationEngine (articles) {
     console.log(articles);
     try {
-      if (articles.length > 0) {
+      if (articles.length > 1) {
         const mostLiked = await apiRequest("/likes/likes");
         const selectedArticles = [];
-
         articles.sort((a, b) => b.views - a.views);
 
-        selectedArticles.push(
-          articles.filter(
-            (article) => article.category === mostLiked.highestLike.category)[0]);
-          
-        selectedArticles.push(
-          articles.filter(
-            (article) => article.category !== mostLiked.highestLike.category)[0]);
-          
-        const randomArticleToGrab = Math.floor(Math.random() * ((articles.length - 1) + 1));
-        selectedArticles.push(articles[randomArticleToGrab]);
+        if (mostLiked) {
+          console.log("mostLiked triggered.");
+          selectedArticles.push(
+            articles.filter(
+              (article) => article.category === mostLiked.highestLike.category)
+                .filter(
+                  (article) => (article.category === "activity" 
+                    ? article.activity.activityType === mostLiked.highestLike.type
+                    : article.meal.mealType === mostLiked.highestLike.type)
+                )[0]
+              );
+            
+          selectedArticles.push(
+            articles.filter(
+              (article) => article.category !== mostLiked.highestLike.category)[0]);
+        }
+        
+        console.log("Selected articles: ", selectedArticles.length);
+        while (selectedArticles.length < 3) {
+          const randomArticleToGrab = Math.floor(Math.random() * ((articles.length - 1) + 1));
+          if (!selectedArticles.find(article => article._id === articles[randomArticleToGrab]._id)) {
+            selectedArticles.push(articles[randomArticleToGrab]);
+          }
+        }
           
         setRecommendedArticles([...selectedArticles]);
+      } else if (articles.length === 1) {
+        setRecommendedArticles([articles]);
       }
     } catch (error) {
       console.log("Unable to process recommendations: ", error.message);
