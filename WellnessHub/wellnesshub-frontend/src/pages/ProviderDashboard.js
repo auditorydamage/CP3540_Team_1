@@ -9,7 +9,7 @@ function ProviderDashboard() {
 
   useEffect(() => {
     fetchArticles(author);
-  },[]);
+  },[articles]);
 
   async function fetchArticles(author) {
       try {
@@ -66,7 +66,7 @@ function ProviderDashboard() {
     } catch (error) {
       alert("Unable to delete article: ", error.message);
     }
-    setArticles([]);
+    fetchArticles();
   }
 
   return (
